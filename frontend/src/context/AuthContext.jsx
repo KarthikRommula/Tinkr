@@ -1,9 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const AuthContext = createContext();
-
-export const useAuth = () => useContext(AuthContext);
+import { AuthContext } from './AuthContextUtils';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -62,10 +59,43 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       await axios.post('http://localhost:8000/users/', userData);
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('Registration error:', error);
-      return false;
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      // Handle specific error responses from the backend
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        if (error.response.status === 400) {
+          if (error.response.data.detail) {
+            errorMessage = error.response.data.detail;
+          } else if (typeof error.response.data === 'object') {
+            // Extract field-specific errors
+            const fieldErrors = [];
+            for (const [field, msgs] of Object.entries(error.response.data)) {
+              if (Array.isArray(msgs)) {
+                fieldErrors.push(`${field}: ${msgs.join(', ')}`);
+              } else {
+                fieldErrors.push(`${field}: ${msgs}`);
+              }
+            }
+            if (fieldErrors.length > 0) {
+              errorMessage = fieldErrors.join('\n');
+            }
+          }
+        } else if (error.response.status === 409) {
+          errorMessage = 'Username or email already exists.';
+        } else if (error.response.status === 422) {
+          errorMessage = 'Invalid input data. Please check your information.';
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response from server. Please check your connection.';
+      }
+      
+      return { success: false, message: errorMessage };
     }
   };
   

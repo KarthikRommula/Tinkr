@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContextUtils';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -36,6 +36,12 @@ function Register() {
       return;
     }
     
+    // Password strength validation
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+    
     // Submit data
     const userData = {
       username: formData.username,
@@ -44,22 +50,36 @@ function Register() {
       full_name: formData.full_name
     };
     
-    const success = await register(userData);
-    if (success) {
-      navigate('/login');
+    const result = await register(userData);
+    if (result.success) {
+      navigate('/login', { 
+        state: { message: 'Registration successful! Please log in with your new account.' } 
+      });
     } else {
-      setError('Registration failed. Username may already exist.');
+      setError(result.message || 'Registration failed. Please try again.');
     }
   };
   
   return (
     <div className="flex justify-center items-center py-12">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Create a SafeGram Account</h1>
+      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-pink-500 to-purple-600 text-transparent bg-clip-text">Join SafeGram</h1>
+          <p className="text-gray-600">Share moments with friends and the world</p>
+        </div>
         
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
           </div>
         )}
         
@@ -143,19 +163,21 @@ function Register() {
             />
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="mt-8">
             <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium rounded-full hover:shadow-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
               type="submit"
             >
-              Register
+              Create Account
             </button>
-            <Link
-              className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-              to="/login"
-            >
-              Already have an account?
-            </Link>
+            <div className="text-center mt-6">
+              <Link
+                className="text-gray-600 hover:text-pink-500 font-medium"
+                to="/login"
+              >
+                Already have an account? <span className="text-pink-500">Log in</span>
+              </Link>
+            </div>
           </div>
         </form>
       </div>
