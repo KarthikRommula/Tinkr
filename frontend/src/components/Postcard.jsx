@@ -28,7 +28,7 @@ function PostCard({ post }) {
       </div>
       
       <img
-        src={`http://localhost:8000/uploads/${post.image_url}`}
+        src={`http://localhost:8000/uploads/${post.image_url.split('/').pop()}`}
         alt={post.caption || "User post"}
         className="w-full h-auto"
       />

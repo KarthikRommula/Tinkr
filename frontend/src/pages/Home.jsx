@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import PostCard from '../components/PostCard';
+import PostCard from '../components/Postcard';
 
 function Home() {
   const [posts, setPosts] = useState([]);

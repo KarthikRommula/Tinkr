@@ -5,9 +5,20 @@ import numpy as np
 # Try to import TensorFlow, but provide fallback if not available
 try:
     import tensorflow as tf
-    from tensorflow.keras.preprocessing.image import img_to_array
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-    TENSORFLOW_AVAILABLE = True
+    # Check if tf.keras is available (in some versions it might be structured differently)
+    try:
+        from tensorflow.keras.preprocessing import image as tf_image
+        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+        TENSORFLOW_AVAILABLE = True
+    except ImportError:
+        # Alternative import paths for different TensorFlow versions
+        try:
+            from keras.preprocessing import image as tf_image
+            from keras.applications.mobilenet_v2 import preprocess_input
+            TENSORFLOW_AVAILABLE = True
+        except ImportError:
+            TENSORFLOW_AVAILABLE = False
+            print("TensorFlow keras modules not properly installed. Using fallback NSFW detection.")
 except ImportError:
     TENSORFLOW_AVAILABLE = False
     print("TensorFlow not available. Using fallback NSFW detection.")
@@ -56,7 +67,7 @@ class NSFWDetector:
                 resized_image = cv2.resize(image, (224, 224))
                 
                 # Preprocess for model
-                img_array = img_to_array(resized_image)
+                img_array = tf_image.img_to_array(resized_image)
                 img_array = preprocess_input(img_array)
                 img_array = np.expand_dims(img_array, axis=0)
                 

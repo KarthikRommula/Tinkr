@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -16,6 +17,13 @@ from app.services.nsfw import NSFWDetector
 
 # Create the FastAPI app
 app = FastAPI(title="SafeGram API")
+
+# Set up upload directory
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Mount the uploads directory as a static files directory
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Set up CORS
 app.add_middleware(
@@ -42,10 +50,6 @@ posts_db = []
 # Initialize AI detectors
 deepfake_detector = DeepfakeDetector()
 nsfw_detector = NSFWDetector()
-
-# Set up upload directory
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Models
 class User(BaseModel):
