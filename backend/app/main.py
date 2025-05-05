@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, status
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
@@ -10,17 +10,28 @@ from passlib.context import CryptContext
 import os
 import shutil
 from uuid import uuid4
+import logging
 
 # Import AI services
 from app.services.deepfake import DeepfakeDetector
 from app.services.nsfw import NSFWDetector
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    filename='safegram.log'
+)
+logger = logging.getLogger("SafeGram")
 
 # Create the FastAPI app
 app = FastAPI(title="SafeGram API")
 
 # Set up upload directory
 UPLOAD_DIR = "uploads"
+TEMP_DIR = "temp_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Mount the uploads directory as a static files directory
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
@@ -81,6 +92,10 @@ class Post(BaseModel):
 class PostCreate(BaseModel):
     caption: Optional[str] = None
 
+class DetectionResult(BaseModel):
+    is_safe: bool
+    reason: Optional[str] = None
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -135,6 +150,37 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+# Content moderation functions
+async def check_image_safety(file_path: str) -> DetectionResult:
+    """Check if an image is safe (no deepfakes or NSFW content)"""
+    logger.info(f"Checking image safety: {file_path}")
+    
+    # Check for deepfakes
+    is_deepfake = deepfake_detector.detect(file_path)
+    if is_deepfake:
+        logger.warning(f"Deepfake detected in image: {file_path}")
+        return DetectionResult(is_safe=False, reason="Detected deepfake image. Upload rejected.")
+    
+    # Check for NSFW content
+    is_nsfw = nsfw_detector.detect(file_path)
+    if is_nsfw:
+        logger.warning(f"NSFW content detected in image: {file_path}")
+        return DetectionResult(is_safe=False, reason="Detected explicit content. Upload rejected.")
+    
+    # If both checks pass, the image is safe
+    logger.info(f"Image passed safety checks: {file_path}")
+    return DetectionResult(is_safe=True)
+
+def cleanup_temp_files(file_paths: List[str]):
+    """Clean up temporary files after processing"""
+    for path in file_paths:
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+                logger.info(f"Cleaned up temporary file: {path}")
+            except Exception as e:
+                logger.error(f"Error cleaning up file {path}: {str(e)}")
+
 # Routes
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -173,35 +219,39 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)):
 async def upload_image(
     file: UploadFile = File(...),
     caption: Optional[str] = None,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: User = Depends(get_current_active_user)
 ):
     # Save the uploaded file temporarily
-    temp_file_path = f"{UPLOAD_DIR}/{uuid4().hex}_{file.filename}"
-    with open(temp_file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    temp_file_path = f"{TEMP_DIR}/{uuid4().hex}_{file.filename}"
     
     try:
-        # Check for deepfakes
-        is_deepfake = deepfake_detector.detect(temp_file_path)
-        if is_deepfake:
-            os.remove(temp_file_path)
+        # Save the file
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        logger.info(f"Temporary file saved: {temp_file_path}")
+        
+        # Check image safety (deepfake and NSFW detection)
+        safety_result = await check_image_safety(temp_file_path)
+        
+        if not safety_result.is_safe:
+            # Schedule cleanup in the background
+            background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+            
+            # Return detailed error
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Detected deepfake image. Upload rejected."
+                detail=safety_result.reason
             )
         
-        # Check for NSFW content
-        is_nsfw = nsfw_detector.detect(temp_file_path)
-        if is_nsfw:
-            os.remove(temp_file_path)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Detected explicit content. Upload rejected."
-            )
+        # If the image passes safety checks, save it permanently
+        final_filename = f"{uuid4().hex}_{file.filename}"
+        final_path = f"{UPLOAD_DIR}/{final_filename}"
+        shutil.copy(temp_file_path, final_path)
         
-        # If both checks pass, save the image
-        final_path = f"{UPLOAD_DIR}/{uuid4().hex}_{file.filename}"
-        os.rename(temp_file_path, final_path)
+        # Schedule cleanup of temp file
+        background_tasks.add_task(cleanup_temp_files, [temp_file_path])
         
         # Create post
         post_id = str(uuid4())
@@ -214,12 +264,17 @@ async def upload_image(
         }
         posts_db.append(new_post)
         
+        logger.info(f"Post created successfully: {post_id}")
         return new_post
     
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         # Clean up the temporary file if it exists
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+        
+        logger.error(f"Error processing image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing image: {str(e)}"
