@@ -16,7 +16,7 @@ logger = logging.getLogger("DeepfakeDetector")
 try:
     import tensorflow as tf
     from tensorflow.keras.preprocessing.image import img_to_array
-    from tensorflow.keras.applications.xception import preprocess_input
+    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
     TENSORFLOW_AVAILABLE = True
     logger.info("TensorFlow successfully loaded")
 except ImportError:
@@ -99,6 +99,9 @@ class DeepfakeDetector:
                 else:
                     logger.info("No faces detected in the image")
             
+            # For placeholder models, generally return False (not a deepfake)
+            # In a real implementation, we would process the image and get predictions
+            
             # If we have a model, check for deepfakes
             max_confidence = 0.0
             
@@ -107,13 +110,13 @@ class DeepfakeDetector:
                 for (x, y, w, h) in faces:
                     # Extract face region with some margin
                     face = image[max(0, y-40):min(image.shape[0], y+h+40), 
-                                 max(0, x-40):min(image.shape[1], x+w+40)]
+                                max(0, x-40):min(image.shape[1], x+w+40)]
                     
                     if face.size == 0:
                         continue
                     
                     # Resize to model input size
-                    face = cv2.resize(face, (299, 299))
+                    face = cv2.resize(face, (224, 224))
                     
                     # Preprocess for model
                     face = img_to_array(face)
@@ -136,7 +139,7 @@ class DeepfakeDetector:
                 return False
             else:
                 # If no faces detected, process the whole image
-                resized_image = cv2.resize(image, (299, 299))
+                resized_image = cv2.resize(image, (224, 224))
                 img_array = img_to_array(resized_image)
                 img_array = preprocess_input(img_array)
                 img_array = np.expand_dims(img_array, axis=0)

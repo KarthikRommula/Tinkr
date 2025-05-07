@@ -15,25 +15,20 @@ logger = logging.getLogger("NSFWDetector")
 # Try to import TensorFlow, but provide fallback if not available
 try:
     import tensorflow as tf
-    # Check if tf.keras is available
-    try:
-        from tensorflow.keras.preprocessing import image as tf_image
-        from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-        TENSORFLOW_AVAILABLE = True
-        logger.info("TensorFlow successfully loaded")
-    except ImportError:
-        # Alternative import paths for different TensorFlow versions
-        try:
-            from keras.preprocessing import image as tf_image
-            from keras.applications.mobilenet_v2 import preprocess_input
-            TENSORFLOW_AVAILABLE = True
-            logger.info("Keras successfully loaded as alternative")
-        except ImportError:
-            TENSORFLOW_AVAILABLE = False
-            logger.warning("TensorFlow keras modules not properly installed. Cannot perform NSFW detection.")
+    from tensorflow.keras.preprocessing import image as tf_image
+    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+    TENSORFLOW_AVAILABLE = True
+    logger.info("TensorFlow successfully loaded")
 except ImportError:
-    TENSORFLOW_AVAILABLE = False
-    logger.warning("TensorFlow not available. Cannot perform NSFW detection.")
+    # Alternative import paths for different TensorFlow versions
+    try:
+        from keras.preprocessing import image as tf_image
+        from keras.applications.mobilenet_v2 import preprocess_input
+        TENSORFLOW_AVAILABLE = True
+        logger.info("Keras successfully loaded as alternative")
+    except ImportError:
+        TENSORFLOW_AVAILABLE = False
+        logger.warning("TensorFlow keras modules not properly installed. Cannot perform NSFW detection.")
 
 class NSFWDetector:
     def __init__(self, model_path=None):
@@ -86,7 +81,7 @@ class NSFWDetector:
                 logger.error(f"Failed to load image: {image_path}")
                 return True  # Reject on error to be safe
             
-            # Resize to model input size (assuming MobileNetV2 input shape)
+            # Resize to model input size (224x224 is common for many models)
             resized_image = cv2.resize(image, (224, 224))
             
             # Preprocess for model
