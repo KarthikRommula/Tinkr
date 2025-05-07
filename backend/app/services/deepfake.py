@@ -1,8 +1,11 @@
+# deepfake.py
 import cv2
 import os
 import numpy as np
 import logging
 import time
+import tensorflow as tf
+import tensorflow_hub as hub
 
 # Set up logging
 logging.basicConfig(
@@ -12,11 +15,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("DeepfakeDetector")
 
-# Try to import TensorFlow, but provide fallback if not available
+# Check TensorFlow availability
 try:
     import tensorflow as tf
     from tensorflow.keras.preprocessing.image import img_to_array
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
     TENSORFLOW_AVAILABLE = True
     logger.info("TensorFlow successfully loaded")
 except ImportError:
@@ -52,10 +54,24 @@ class DeepfakeDetector:
         if TENSORFLOW_AVAILABLE:
             try:
                 if os.path.exists(self.model_path):
-                    self.model = tf.keras.models.load_model(self.model_path)
-                    logger.info(f"Loaded deepfake detection model from {self.model_path}")
+                    # Try to load model from saved format
+                    try:
+                        self.model = tf.keras.models.load_model(self.model_path)
+                        logger.info(f"Loaded deepfake detection model from {self.model_path}")
+                    except:
+                        # If fails, try loading as a SavedModel
+                        self.model = tf.saved_model.load(self.model_path)
+                        logger.info(f"Loaded deepfake detection SavedModel from {self.model_path}")
                 else:
-                    logger.error(f"Model file not found at: {self.model_path}")
+                    # If model doesn't exist locally, try loading from TF Hub
+                    try:
+                        logger.info("Attempting to load deepfake model from TensorFlow Hub")
+                        # Note: Replace with actual deepfake model URL when available
+                        self.model = hub.load("https://tfhub.dev/tensorflow/efficientnet/b0/classification/1")
+                        logger.info("Loaded deepfake detection model from TensorFlow Hub")
+                    except Exception as hub_error:
+                        logger.error(f"Error loading model from TensorFlow Hub: {str(hub_error)}")
+                        logger.error("Model file not found and could not load from TensorFlow Hub")
             except Exception as e:
                 logger.error(f"Error loading model: {str(e)}")
     
@@ -99,54 +115,29 @@ class DeepfakeDetector:
                 else:
                     logger.info("No faces detected in the image")
             
-            # For placeholder models, generally return False (not a deepfake)
-            # In a real implementation, we would process the image and get predictions
-            
-            # If we have a model, check for deepfakes
-            max_confidence = 0.0
-            
-            # If we found faces, check each one
-            if has_faces:
-                for (x, y, w, h) in faces:
-                    # Extract face region with some margin
-                    face = image[max(0, y-40):min(image.shape[0], y+h+40), 
-                                max(0, x-40):min(image.shape[1], x+w+40)]
-                    
-                    if face.size == 0:
-                        continue
-                    
-                    # Resize to model input size
-                    face = cv2.resize(face, (224, 224))
-                    
-                    # Preprocess for model
-                    face = img_to_array(face)
-                    face = preprocess_input(face)
-                    face = np.expand_dims(face, axis=0)
-                    
-                    # Predict
-                    prediction = self.model.predict(face)
-                    confidence = prediction[0][0]
-                    max_confidence = max(max_confidence, confidence)
-                    
-                    logger.info(f"Face detection confidence: {confidence:.4f}")
-                    
-                    # Check if probability exceeds threshold
-                    if confidence > threshold:
-                        logger.warning(f"Deepfake detected with confidence: {confidence:.4f}")
-                        return True
-                
-                logger.info(f"No deepfakes detected. Max confidence: {max_confidence:.4f}")
-                return False
-            else:
-                # If no faces detected, process the whole image
-                resized_image = cv2.resize(image, (224, 224))
+            # If no faces detected, process the whole image
+            if not has_faces:
+                # Preprocess image for the model
+                resized_image = cv2.resize(image, (224, 224))  # Standard size for many models
                 img_array = img_to_array(resized_image)
-                img_array = preprocess_input(img_array)
+                img_array = img_array / 255.0  # Normalize to [0,1]
                 img_array = np.expand_dims(img_array, axis=0)
                 
-                # Predict
-                prediction = self.model.predict(img_array)
-                confidence = prediction[0][0]
+                # Make prediction - adapt this based on your model's expected input/output
+                try:
+                    # For Keras model
+                    prediction = self.model.predict(img_array)
+                    if isinstance(prediction, list):
+                        confidence = prediction[0][0]
+                    else:
+                        confidence = prediction[0][0]
+                except:
+                    # For TF Hub model
+                    prediction = self.model(img_array)
+                    if isinstance(prediction, dict):
+                        confidence = prediction['logits'][0][0].numpy()
+                    else:
+                        confidence = prediction[0][0].numpy()
                 
                 logger.info(f"Whole image deepfake confidence: {confidence:.4f}")
                 
@@ -156,6 +147,52 @@ class DeepfakeDetector:
                     return True
                 
                 return False
+            
+            # Process each detected face
+            max_confidence = 0.0
+            for (x, y, w, h) in faces:
+                # Extract face region with some margin
+                face = image[max(0, y-40):min(image.shape[0], y+h+40), 
+                            max(0, x-40):min(image.shape[1], x+w+40)]
+                
+                if face.size == 0:
+                    continue
+                
+                # Resize to model input size
+                face = cv2.resize(face, (224, 224))
+                
+                # Preprocess for model
+                face = img_to_array(face)
+                face = face / 255.0  # Normalize
+                face = np.expand_dims(face, axis=0)
+                
+                # Predict
+                try:
+                    # For Keras model
+                    prediction = self.model.predict(face)
+                    if isinstance(prediction, list):
+                        confidence = prediction[0][0]
+                    else:
+                        confidence = prediction[0][0]
+                except:
+                    # For TF Hub model
+                    prediction = self.model(face)
+                    if isinstance(prediction, dict):
+                        confidence = prediction['logits'][0][0].numpy()
+                    else:
+                        confidence = prediction[0][0].numpy()
+                
+                max_confidence = max(max_confidence, confidence)
+                
+                logger.info(f"Face detection confidence: {confidence:.4f}")
+                
+                # Check if probability exceeds threshold
+                if confidence > threshold:
+                    logger.warning(f"Deepfake detected with confidence: {confidence:.4f}")
+                    return True
+            
+            logger.info(f"No deepfakes detected. Max confidence: {max_confidence:.4f}")
+            return False
             
         except Exception as e:
             logger.error(f"Error in deepfake detection: {str(e)}")

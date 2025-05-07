@@ -1,8 +1,11 @@
+# nsfw.py
 import cv2
 import os
 import numpy as np
 import logging
 import time
+import tensorflow as tf
+import tensorflow_hub as hub
 
 # Set up logging
 logging.basicConfig(
@@ -15,20 +18,11 @@ logger = logging.getLogger("NSFWDetector")
 # Try to import TensorFlow, but provide fallback if not available
 try:
     import tensorflow as tf
-    from tensorflow.keras.preprocessing import image as tf_image
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
     TENSORFLOW_AVAILABLE = True
     logger.info("TensorFlow successfully loaded")
 except ImportError:
-    # Alternative import paths for different TensorFlow versions
-    try:
-        from keras.preprocessing import image as tf_image
-        from keras.applications.mobilenet_v2 import preprocess_input
-        TENSORFLOW_AVAILABLE = True
-        logger.info("Keras successfully loaded as alternative")
-    except ImportError:
-        TENSORFLOW_AVAILABLE = False
-        logger.warning("TensorFlow keras modules not properly installed. Cannot perform NSFW detection.")
+    TENSORFLOW_AVAILABLE = False
+    logger.warning("TensorFlow not available. Cannot perform NSFW detection.")
 
 class NSFWDetector:
     def __init__(self, model_path=None):
@@ -48,10 +42,24 @@ class NSFWDetector:
         if TENSORFLOW_AVAILABLE:
             try:
                 if os.path.exists(self.model_path):
-                    self.model = tf.keras.models.load_model(self.model_path)
-                    logger.info(f"Loaded NSFW detection model from {self.model_path}")
+                    # Try to load model from saved format
+                    try:
+                        self.model = tf.keras.models.load_model(self.model_path)
+                        logger.info(f"Loaded NSFW detection model from {self.model_path}")
+                    except:
+                        # If fails, try loading as a SavedModel
+                        self.model = tf.saved_model.load(self.model_path)
+                        logger.info(f"Loaded NSFW detection SavedModel from {self.model_path}")
                 else:
-                    logger.error(f"Model file not found at: {self.model_path}")
+                    # If model doesn't exist locally, try loading from TF Hub
+                    try:
+                        logger.info("Attempting to load NSFW model from TensorFlow Hub")
+                        # Use a well-known NSFW detection model from TF Hub
+                        self.model = hub.load("https://tfhub.dev/google/imagenet/mobilenet_v2_140_224/classification/5")
+                        logger.info("Loaded NSFW detection model from TensorFlow Hub")
+                    except Exception as hub_error:
+                        logger.error(f"Error loading model from TensorFlow Hub: {str(hub_error)}")
+                        logger.error("Model file not found and could not load from TensorFlow Hub")
             except Exception as e:
                 logger.error(f"Error loading model: {str(e)}")
     
@@ -84,17 +92,37 @@ class NSFWDetector:
             # Resize to model input size (224x224 is common for many models)
             resized_image = cv2.resize(image, (224, 224))
             
+            # Convert BGR to RGB (TensorFlow models typically expect RGB)
+            rgb_image = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
+            
             # Preprocess for model
-            img_array = tf_image.img_to_array(resized_image)
-            img_array = preprocess_input(img_array)
+            img_array = np.asarray(rgb_image, dtype=np.float32)
+            img_array = img_array / 255.0  # Normalize to [0,1]
             img_array = np.expand_dims(img_array, axis=0)
             
             # Predict
-            prediction = self.model.predict(img_array)
-            
-            # Assuming binary classification (SFW vs NSFW)
-            # For multi-class, we'd need to adjust this logic
-            nsfw_probability = prediction[0][0]
+            try:
+                # For Keras model
+                prediction = self.model.predict(img_array)
+                # Adapt this based on your model's expected output format
+                if isinstance(prediction, list):
+                    nsfw_probability = prediction[0][0]  # Assuming first index is NSFW score
+                else:
+                    nsfw_probability = prediction[0][0]
+            except:
+                # For TF Hub model
+                prediction = self.model(img_array)
+                if isinstance(prediction, dict):
+                    # Example for NudeNet-like output with multiple classes
+                    if 'nsfw_score' in prediction:
+                        nsfw_probability = prediction['nsfw_score'][0].numpy()
+                    else:
+                        # For general classification model, use appropriate index
+                        # This will vary based on the model used
+                        nsfw_probability = prediction['logits'][0][513].numpy()  # Example index
+                else:
+                    # Basic prediction tensor, adjust index as needed
+                    nsfw_probability = prediction[0][0].numpy()
             
             logger.info(f"NSFW probability: {nsfw_probability:.4f}")
             
