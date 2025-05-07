@@ -46,3 +46,182 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-08 00:24:35,001 - SafeGram - INFO - Image passed safety checks: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
 2025-05-08 00:24:35,001 - SafeGram - INFO - Post created successfully: bed58de1-ee39-4958-bc06-a1383a80ca81
 2025-05-08 00:24:35,001 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
+2025-05-08 00:28:07,265 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:28:07,267 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:28:07,268 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:28:07,570 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:28:07,668 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:28:29,090 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-08 00:28:43,729 - SafeGram - INFO - Temporary file saved: temp_uploads/d84cc9b1d2df4065afb17a9d513a40cb_fake_1016.jpg
+2025-05-08 00:28:43,729 - SafeGram - INFO - Checking image safety: temp_uploads/d84cc9b1d2df4065afb17a9d513a40cb_fake_1016.jpg
+2025-05-08 00:28:43,729 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/d84cc9b1d2df4065afb17a9d513a40cb_fake_1016.jpg
+2025-05-08 00:28:43,979 - DeepfakeDetector - INFO - Whole image deepfake confidence: 0.0081
+2025-05-08 00:28:43,979 - DeepfakeDetector - INFO - Deepfake detection processing time: 0.25 seconds
+2025-05-08 00:28:43,979 - NSFWDetector - INFO - Checking image for NSFW content: temp_uploads/d84cc9b1d2df4065afb17a9d513a40cb_fake_1016.jpg
+2025-05-08 00:28:44,078 - NSFWDetector - INFO - NSFW probability: 0.0048
+2025-05-08 00:28:44,078 - NSFWDetector - INFO - NSFW detection processing time: 0.10 seconds
+2025-05-08 00:28:44,078 - SafeGram - INFO - Image passed safety checks: temp_uploads/d84cc9b1d2df4065afb17a9d513a40cb_fake_1016.jpg
+2025-05-08 00:28:44,081 - SafeGram - INFO - Post created successfully: c12824ac-bf08-4648-9e0c-f680edea2bcf
+2025-05-08 00:28:44,084 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/d84cc9b1d2df4065afb17a9d513a40cb_fake_1016.jpg
+2025-05-08 00:34:10,388 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:10,390 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:10,396 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:34:10,576 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:34:10,652 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:34:13,901 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:13,901 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:13,901 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:34:14,060 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:34:14,108 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:34:48,313 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:48,317 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:48,322 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:34:48,509 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:34:48,563 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:34:48,695 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:34:51,844 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:51,845 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:51,850 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:34:52,018 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:34:52,147 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:34:52,208 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:34:52,301 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:34:55,235 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:55,236 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:34:55,241 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:34:55,404 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:34:55,522 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:34:55,582 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:34:55,681 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:07,529 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:07,530 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:07,535 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:35:07,714 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:35:07,852 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:07,915 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:35:08,007 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:27,165 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:27,167 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:27,171 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:35:27,336 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:35:27,457 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:27,515 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:35:27,609 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:30,696 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:30,697 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:30,702 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:35:30,866 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:35:30,986 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:31,044 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:35:31,143 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:42,397 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:42,397 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:42,406 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:35:42,575 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:35:42,702 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:42,764 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:35:42,862 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:49,054 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:49,056 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:49,061 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:35:49,237 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:35:49,363 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:49,424 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:35:49,522 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:52,660 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:52,662 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:35:52,668 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:35:52,848 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:35:52,975 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:35:53,037 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:35:53,144 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:36:06,581 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:36:06,582 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:36:06,587 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:36:06,746 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:36:06,868 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:36:06,925 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:36:07,026 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:36:10,136 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:36:10,138 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:36:10,142 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:36:10,306 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:36:10,442 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:36:10,509 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:36:10,652 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:36:27,756 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:36:27,758 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:36:27,762 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:36:27,923 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:36:28,043 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:36:28,104 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:36:28,202 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:08,330 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:08,331 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:08,336 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:37:08,500 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:37:08,619 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:08,677 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:37:08,768 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:11,802 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:11,804 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:11,808 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:37:11,970 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:37:12,092 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:12,151 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:37:12,248 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:44,927 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:44,929 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:44,933 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:37:45,097 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:37:45,216 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:45,281 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:37:45,378 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:48,422 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:48,423 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:48,428 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:37:48,630 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:37:48,780 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:48,854 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:37:48,953 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:57,692 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:57,693 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:37:57,693 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:37:57,871 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:37:57,999 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:37:58,058 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:37:58,150 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:38:05,666 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:38:05,668 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:38:05,673 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:38:05,837 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:38:05,961 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:38:06,020 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:38:06,120 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:38:09,190 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:38:09,191 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:38:09,195 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:38:09,355 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:38:09,475 - DeepfakeDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:38:09,534 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:38:09,634 - NSFWDetector - INFO - Model successfully tested with dummy input
+2025-05-08 00:49:59,556 - DeepfakeDetector - WARNING - TensorFlow not available. Cannot perform deepfake detection.
+2025-05-08 00:49:59,556 - NSFWDetector - WARNING - TensorFlow not available. Cannot perform NSFW detection.
+2025-05-08 00:49:59,564 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:49:59,572 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-08 00:49:59,572 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:50:44,227 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-08 00:51:00,680 - SafeGram - INFO - Temporary file saved: temp_uploads/25a0a81904754ca18dbda2dfc4af5d5f_fake_1016.jpg
+2025-05-08 00:51:00,830 - SafeGram - INFO - Checking image safety: temp_uploads/25a0a81904754ca18dbda2dfc4af5d5f_fake_1016.jpg
+2025-05-08 00:51:00,830 - SafeGram - INFO - Running in development mode
+2025-05-08 00:51:00,830 - SafeGram - INFO - Development mode: bypassing all image safety checks
+2025-05-08 00:51:00,830 - SafeGram - INFO - Post created successfully: aff9625b-19ee-4b08-bb8c-654abe83f973
+2025-05-08 00:51:00,830 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/25a0a81904754ca18dbda2dfc4af5d5f_fake_1016.jpg

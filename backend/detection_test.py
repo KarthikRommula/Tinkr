@@ -28,7 +28,7 @@ def test_detection(image_path, model_dir="app/services/models"):
     # Check if image exists
     if not os.path.exists(image_path):
         logger.error(f"Image not found: {image_path}")
-        return
+        return False
     
     # Test deepfake detection
     logger.info("Testing deepfake detection...")
@@ -37,6 +37,7 @@ def test_detection(image_path, model_dir="app/services/models"):
         logger.info(f"Deepfake detection result: {'Rejected' if is_deepfake else 'Accepted'}")
     except Exception as e:
         logger.error(f"Deepfake detection error: {str(e)}")
+        return False
     
     # Test NSFW detection
     logger.info("Testing NSFW detection...")
@@ -45,16 +46,23 @@ def test_detection(image_path, model_dir="app/services/models"):
         logger.info(f"NSFW detection result: {'Rejected' if is_nsfw else 'Accepted'}")
     except Exception as e:
         logger.error(f"NSFW detection error: {str(e)}")
+        return False
     
     # Overall result
     if is_deepfake or is_nsfw:
         logger.info("OVERALL RESULT: Image would be REJECTED")
     else:
         logger.info("OVERALL RESULT: Image would be ACCEPTED")
+    
+    return True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test image detection systems")
     parser.add_argument("image_path", help="Path to the image to test")
     args = parser.parse_args()
     
-    test_detection(args.image_path)
+    # Run the test
+    success = test_detection(args.image_path)
+    if not success:
+        print("Detection test failed. Check the logs for details.")
+        exit(1)

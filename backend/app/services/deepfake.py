@@ -1,5 +1,4 @@
-# app/services/deepfake.py
-# Update the existing file with the following changes
+# app/services/deepfake.py (updated version)
 import cv2
 import os
 import numpy as np
@@ -50,12 +49,21 @@ class DeepfakeDetector:
         
         # Initialize face detection with OpenCV
         try:
-            cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-            if os.path.exists(cascade_path):
-                self.face_cascade = cv2.CascadeClassifier(cascade_path)
-                logger.info(f"Loaded face detection model from {cascade_path}")
-            else:
-                logger.error(f"Face cascade file not found at: {cascade_path}")
+            # Try different paths for the cascade file
+            potential_paths = [
+                cv2.data.haarcascades + 'haarcascade_frontalface_default.xml',
+                'haarcascade_frontalface_default.xml',
+                os.path.join(os.path.dirname(__file__), 'models', 'haarcascade_frontalface_default.xml')
+            ]
+            
+            for path in potential_paths:
+                if os.path.exists(path):
+                    self.face_cascade = cv2.CascadeClassifier(path)
+                    logger.info(f"Loaded face detection model from {path}")
+                    break
+            
+            if self.face_cascade is None:
+                logger.warning("Could not find face cascade file. Face detection will be limited.")
         except Exception as e:
             logger.error(f"Error initializing face detector: {str(e)}")
         
@@ -66,25 +74,36 @@ class DeepfakeDetector:
     def _load_model(self):
         """Load the deepfake detection model"""
         try:
+            # First check if it's a directory (SavedModel format)
+            if os.path.isdir(self.model_path):
+                try:
+                    self.model = tf.saved_model.load(self.model_path)
+                    logger.info(f"Loaded deepfake detection SavedModel from {self.model_path}")
+                    return
+                except Exception as e:
+                    logger.error(f"Error loading SavedModel: {str(e)}")
+            
+            # Then try as a .h5 file
             if os.path.exists(self.model_path):
-                # Try to load model from saved format
                 try:
                     self.model = tf.keras.models.load_model(self.model_path)
                     logger.info(f"Loaded deepfake detection model from {self.model_path}")
+                    
+                    # Test the model with a dummy input to make sure it works
+                    dummy_input = np.zeros((1, 224, 224, 3))
+                    _ = self.model.predict(dummy_input)
+                    logger.info("Model successfully tested with dummy input")
+                    return
                 except Exception as e:
-                    logger.error(f"Error loading model from path: {str(e)}")
-                    # Try loading as a SavedModel
-                    try:
-                        self.model = tf.saved_model.load(self.model_path)
-                        logger.info(f"Loaded deepfake detection SavedModel from {self.model_path}")
-                    except Exception as e2:
-                        logger.error(f"Error loading SavedModel: {str(e2)}")
-                        self._load_placeholder_model()
+                    logger.error(f"Error loading or testing model: {str(e)}")
             else:
                 logger.warning(f"Model file not found at: {self.model_path}")
-                self._load_placeholder_model()
+            
+            # If we get here, model loading failed - try to create a placeholder
+            self._load_placeholder_model()
         except Exception as e:
             logger.error(f"Error in _load_model: {str(e)}")
+            self._load_placeholder_model()
     
     def _load_placeholder_model(self):
         """Create and load a simple placeholder model"""
@@ -93,7 +112,7 @@ class DeepfakeDetector:
             input_shape = (224, 224, 3)
             model = tf.keras.Sequential([
                 tf.keras.layers.Input(shape=input_shape),
-                tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
+                tf.keras.layers.Conv2D(8, (3, 3), activation='relu'),
                 tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
                 tf.keras.layers.Flatten(),
                 tf.keras.layers.Dense(8, activation='relu'),
@@ -115,14 +134,22 @@ class DeepfakeDetector:
                     weights[1] = np.array([-5.0])
                     layer.set_weights(weights)
             
+            # Test the model
+            dummy_input = np.zeros((1, 224, 224, 3))
+            prediction = model.model.predict(dummy_input)
+            logger.info(f"Placeholder model test prediction: {prediction[0][0]}")
+            
             self.model = model
             logger.info("Created placeholder deepfake detection model")
             
             # Save the model if directory exists
             model_dir = os.path.dirname(self.model_path)
             if os.path.exists(model_dir):
-                model.save(self.model_path)
-                logger.info(f"Saved placeholder model to {self.model_path}")
+                try:
+                    model.save(self.model_path)
+                    logger.info(f"Saved placeholder model to {self.model_path}")
+                except Exception as e:
+                    logger.error(f"Error saving placeholder model: {str(e)}")
         except Exception as e:
             logger.error(f"Error creating placeholder model: {str(e)}")
     
@@ -140,21 +167,18 @@ class DeepfakeDetector:
         start_time = time.time()
         logger.info(f"Checking image for deepfakes: {image_path}")
         
-        # Check if we're in development mode
-        if self.dev_mode:
-            dev_bypass = os.getenv("ALWAYS_PASS_DEEPFAKE", "True").lower() == "true"
-            if dev_bypass:
-                logger.info("Development mode - bypassing deepfake detection")
-                return False
+        # Check if we're in development mode with bypass enabled
+        if self.dev_mode and os.getenv("ALWAYS_PASS_DEEPFAKE", "False").lower() == "true":
+            logger.info("Development mode - bypassing deepfake detection")
+            return False
         
-        # If no TensorFlow, reject based on configuration
+        # If no TensorFlow, handle based on configuration
         if not TENSORFLOW_AVAILABLE:
             reject_on_failure = os.getenv("REJECT_ON_MODEL_FAILURE", "False").lower() == "true"
-            logger.error("TensorFlow not available - " + 
-                       ("rejecting" if reject_on_failure else "accepting") + " upload")
+            logger.error(f"TensorFlow not available - {'rejecting' if reject_on_failure else 'accepting'} upload")
             return reject_on_failure
         
-        # If no model and failed to create one, reject based on configuration
+        # If no model and failed to create one, handle based on configuration
         if self.model is None:
             try:
                 self._load_placeholder_model()
@@ -170,99 +194,28 @@ class DeepfakeDetector:
                 logger.error(f"Failed to load image: {image_path}")
                 return os.getenv("REJECT_ON_IMAGE_ERROR", "True").lower() == "true"
             
-            has_faces = False
-            faces = []
+            # Resize to standard size for model input
+            resized_image = cv2.resize(image, (224, 224))
+            img_array = img_to_array(resized_image)
+            img_array = img_array / 255.0  # Normalize to [0,1]
+            img_array = np.expand_dims(img_array, axis=0)
             
-            # Detect faces with OpenCV
-            if self.face_cascade:
-                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                faces = self.face_cascade.detectMultiScale(gray, 1.1, 4)
-                
-                if len(faces) > 0:
-                    has_faces = True
-                    logger.info(f"Detected {len(faces)} faces in the image")
-                else:
-                    logger.info("No faces detected in the image")
-            
-            # If no faces detected, process the whole image
-            if not has_faces:
-                # Preprocess image for the model
-                resized_image = cv2.resize(image, (224, 224))  # Standard size for many models
-                img_array = img_to_array(resized_image)
-                img_array = img_array / 255.0  # Normalize to [0,1]
-                img_array = np.expand_dims(img_array, axis=0)
-                
-                # Make prediction - adapt this based on your model's expected input/output
-                try:
-                    # For Keras model
-                    prediction = self.model.predict(img_array)
-                    if isinstance(prediction, list):
-                        confidence = prediction[0][0]
-                    else:
-                        confidence = prediction[0][0]
-                except:
-                    # For TF Hub model
-                    prediction = self.model(img_array)
-                    if isinstance(prediction, dict):
-                        confidence = prediction['logits'][0][0].numpy()
-                    else:
-                        confidence = prediction[0][0].numpy()
-                
-                logger.info(f"Whole image deepfake confidence: {confidence:.4f}")
-                
-                # Check if probability exceeds threshold
-                if confidence > threshold:
-                    logger.warning(f"Deepfake detected in image with confidence: {confidence:.4f}")
-                    return True
-                
-                return False
-            
-            # Process each detected face
-            max_confidence = 0.0
-            for (x, y, w, h) in faces:
-                # Extract face region with some margin
-                face = image[max(0, y-40):min(image.shape[0], y+h+40), 
-                            max(0, x-40):min(image.shape[1], x+w+40)]
-                
-                if face.size == 0:
-                    continue
-                
-                # Resize to model input size
-                face = cv2.resize(face, (224, 224))
-                
-                # Preprocess for model
-                face = img_to_array(face)
-                face = face / 255.0  # Normalize
-                face = np.expand_dims(face, axis=0)
-                
-                # Predict
-                try:
-                    # For Keras model
-                    prediction = self.model.predict(face)
-                    if isinstance(prediction, list):
-                        confidence = prediction[0][0]
-                    else:
-                        confidence = prediction[0][0]
-                except:
-                    # For TF Hub model
-                    prediction = self.model(face)
-                    if isinstance(prediction, dict):
-                        confidence = prediction['logits'][0][0].numpy()
-                    else:
-                        confidence = prediction[0][0].numpy()
-                
-                max_confidence = max(max_confidence, confidence)
-                
-                logger.info(f"Face detection confidence: {confidence:.4f}")
+            # Make prediction
+            try:
+                prediction = self.model.predict(img_array)
+                confidence = float(prediction[0][0])
+                logger.info(f"Deepfake detection confidence: {confidence:.4f}")
                 
                 # Check if probability exceeds threshold
                 if confidence > threshold:
                     logger.warning(f"Deepfake detected with confidence: {confidence:.4f}")
                     return True
-            
-            logger.info(f"No deepfakes detected. Max confidence: {max_confidence:.4f}")
-            return False
-            
+                
+                logger.info(f"No deepfake detected. Confidence: {confidence:.4f}")
+                return False
+            except Exception as e:
+                logger.error(f"Error during model prediction: {str(e)}")
+                return os.getenv("REJECT_ON_ERROR", "False").lower() == "true"
         except Exception as e:
             logger.error(f"Error in deepfake detection: {str(e)}")
             return os.getenv("REJECT_ON_ERROR", "False").lower() == "true"

@@ -1,0 +1,288 @@
+# setup_safegram.py
+import os
+import logging
+import subprocess
+import sys
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("SafegramSetup")
+
+def check_and_create_directories():
+    """Check and create necessary directories"""
+    dirs_to_create = [
+        'app/services/models',
+        'uploads',
+        'temp_uploads',
+        'test_images'
+    ]
+    
+    for directory in dirs_to_create:
+        if not os.path.exists(directory):
+            logger.info(f"Creating directory: {directory}")
+            os.makedirs(directory, exist_ok=True)
+        else:
+            logger.info(f"Directory already exists: {directory}")
+            
+    # Check write permissions
+    for directory in dirs_to_create:
+        try:
+            test_file = os.path.join(directory, ".permission_test")
+            with open(test_file, "w") as f:
+                f.write("test")
+            os.remove(test_file)
+            logger.info(f"Directory {directory} is writable")
+        except Exception as e:
+            logger.error(f"Directory {directory} has permission issues: {str(e)}")
+
+def check_tensorflow():
+    """Check if TensorFlow is installed and working"""
+    try:
+        import tensorflow as tf
+        logger.info(f"TensorFlow version: {tf.__version__}")
+        
+        # Test TensorFlow
+        logger.info("Testing TensorFlow with a simple operation...")
+        # Create a small test tensor and perform an operation
+        test_tensor = tf.constant([[1, 2], [3, 4]])
+        result = tf.matmul(test_tensor, test_tensor)
+        logger.info(f"TensorFlow test result: {result.numpy()}")
+        
+        return True
+    except ImportError:
+        logger.error("TensorFlow is not installed")
+        return False
+    except Exception as e:
+        logger.error(f"Error testing TensorFlow: {str(e)}")
+        return False
+
+def install_tensorflow():
+    """Install TensorFlow if it's not available"""
+    logger.info("Attempting to install TensorFlow...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "tensorflow"])
+        logger.info("TensorFlow installed successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error installing TensorFlow: {str(e)}")
+        return False
+
+def check_opencv():
+    """Check if OpenCV is installed and working"""
+    try:
+        import cv2
+        logger.info(f"OpenCV version: {cv2.__version__}")
+        
+        # Test OpenCV
+        logger.info("Testing OpenCV with a simple operation...")
+        # Create a small test image
+        test_image = cv2.Mat(10, 10, cv2.CV_8UC3)
+        # Convert to grayscale
+        gray = cv2.cvtColor(test_image, cv2.COLOR_BGR2GRAY)
+        logger.info(f"OpenCV test successful: created {gray.shape} grayscale image")
+        
+        return True
+    except ImportError:
+        logger.error("OpenCV is not installed")
+        return False
+    except Exception as e:
+        logger.error(f"Error testing OpenCV: {str(e)}")
+        return False
+
+def install_opencv():
+    """Install OpenCV if it's not available"""
+    logger.info("Attempting to install OpenCV...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "opencv-python"])
+        logger.info("OpenCV installed successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error installing OpenCV: {str(e)}")
+        return False
+
+def create_env_file():
+    """Create or update the .env file with proper settings"""
+    env_file = ".env"
+    
+    # Default settings
+    env_settings = {
+        "SAFEGRAM_DEV_MODE": "True",
+        "REJECT_ON_MODEL_FAILURE": "False",
+        "REJECT_ON_IMAGE_ERROR": "True",
+        "REJECT_ON_ERROR": "False",
+        "ALWAYS_PASS_DEEPFAKE": "True",
+        "ALWAYS_PASS_NSFW": "True",
+        "AI_MODEL_DIR": "app/services/models",
+        "TENSORFLOW_LOG_LEVEL": "0",
+        "UPLOAD_DIR": "uploads",
+        "TEMP_DIR": "temp_uploads"
+    }
+    
+    # Check if file exists and read current settings
+    if os.path.exists(env_file):
+        logger.info(f"Reading existing {env_file} file")
+        current_settings = {}
+        with open(env_file, 'r') as f:
+            for line in f:
+                if line.strip() and not line.startswith('#'):
+                    try:
+                        key, value = line.strip().split('=', 1)
+                        current_settings[key] = value
+                    except ValueError:
+                        pass
+        
+        # Update with existing settings
+        env_settings.update(current_settings)
+    
+    # Write the .env file
+    logger.info(f"Creating/updating {env_file} file")
+    with open(env_file, 'w') as f:
+        f.write("# SafeGram Environment Configuration\n")
+        f.write("# Generated by setup_safegram.py\n\n")
+        
+        for key, value in env_settings.items():
+            f.write(f"{key}={value}\n")
+    
+    logger.info(f"{env_file} file created successfully")
+
+def create_test_image():
+    """Create a simple test image for testing"""
+    try:
+        import cv2
+        import numpy as np
+        
+        test_dir = 'test_images'
+        os.makedirs(test_dir, exist_ok=True)
+        
+        # Create a gradient test image
+        test_image_path = os.path.join(test_dir, 'test_gradient.jpg')
+        
+        image = np.zeros((224, 224, 3), dtype=np.uint8)
+        
+        # Create a RGB gradient
+        for i in range(224):
+            for j in range(224):
+                image[i, j, 0] = i % 256  # R
+                image[i, j, 1] = j % 256  # G
+                image[i, j, 2] = (i + j) % 256  # B
+        
+        # Save the image
+        cv2.imwrite(test_image_path, image)
+        logger.info(f"Created test image at {test_image_path}")
+        
+        return test_image_path
+    except Exception as e:
+        logger.error(f"Error creating test image: {str(e)}")
+        return None
+
+def run_model_creation():
+    """Run the script to create the models"""
+    try:
+        logger.info("Running model creation script...")
+        result = subprocess.run(
+            [sys.executable, "improved_placeholder_models.py"],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        logger.info(f"Model creation output:\n{result.stdout}")
+        if result.stderr:
+            logger.warning(f"Model creation stderr:\n{result.stderr}")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running model creation: {e}")
+        logger.error(f"Stderr: {e.stderr}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error running model creation: {str(e)}")
+        return False
+
+def run_test_detection():
+    """Run a test detection on the test image"""
+    try:
+        test_image = create_test_image()
+        if not test_image:
+            logger.error("Could not create test image")
+            return False
+            
+        logger.info("Running test detection script...")
+        result = subprocess.run(
+            [sys.executable, "detection_test.py", test_image],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        logger.info(f"Test detection output:\n{result.stdout}")
+        if result.stderr:
+            logger.warning(f"Test detection stderr:\n{result.stderr}")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running test detection: {e}")
+        logger.error(f"Stderr: {e.stderr}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error running test detection: {str(e)}")
+        return False
+
+def main():
+    """Main setup function"""
+    print("=" * 80)
+    print("SafeGram Setup")
+    print("=" * 80)
+    
+    # Check and create directories
+    print("\nChecking directories...")
+    check_and_create_directories()
+    
+    # Check TensorFlow
+    print("\nChecking TensorFlow...")
+    if not check_tensorflow():
+        print("TensorFlow is not available. Would you like to install it? (y/n)")
+        choice = input().lower()
+        if choice == 'y':
+            if install_tensorflow():
+                print("TensorFlow installed successfully!")
+            else:
+                print("Failed to install TensorFlow. Please install it manually.")
+                print("You can try: pip install tensorflow")
+    
+    # Check OpenCV
+    print("\nChecking OpenCV...")
+    if not check_opencv():
+        print("OpenCV is not available. Would you like to install it? (y/n)")
+        choice = input().lower()
+        if choice == 'y':
+            if install_opencv():
+                print("OpenCV installed successfully!")
+            else:
+                print("Failed to install OpenCV. Please install it manually.")
+                print("You can try: pip install opencv-python")
+    
+    # Create .env file
+    print("\nCreating .env file...")
+    create_env_file()
+    
+    # Create model files
+    print("\nCreating AI model files...")
+    if run_model_creation():
+        print("AI models created successfully!")
+    else:
+        print("Failed to create AI models. Please check the logs.")
+    
+    # Run test detection
+    print("\nRunning test detection...")
+    if run_test_detection():
+        print("Test detection completed successfully!")
+    else:
+        print("Test detection failed. Please check the logs.")
+    
+    print("\n" + "=" * 80)
+    print("Setup completed!")
+    print("You can now start the SafeGram server with: uvicorn app.main:app --reload")
+    print("=" * 80)
+
+if __name__ == "__main__":
+    main()

@@ -12,6 +12,7 @@ import shutil
 from uuid import uuid4
 import logging
 from dotenv import load_dotenv
+from fastapi import BackgroundTasks, HTTPException, status
 
 # Load environment variables from .env file
 load_dotenv()
@@ -164,17 +165,40 @@ async def check_image_safety(file_path: str) -> DetectionResult:
     """Check if an image is safe (no deepfakes or NSFW content)"""
     logger.info(f"Checking image safety: {file_path}")
     
+    # Get environment settings
+    dev_mode = os.getenv("SAFEGRAM_DEV_MODE", "False").lower() == "true"
+    
+    # Log environment mode
+    if dev_mode:
+        logger.info("Running in development mode")
+        
+        # In development mode, can bypass both checks if configured to do so
+        if os.getenv("ALWAYS_PASS_DEEPFAKE", "False").lower() == "true" and \
+           os.getenv("ALWAYS_PASS_NSFW", "False").lower() == "true":
+            logger.info("Development mode: bypassing all image safety checks")
+            return DetectionResult(is_safe=True)
+    
     # Check for deepfakes
-    is_deepfake = deepfake_detector.detect(file_path)
-    if is_deepfake:
-        logger.warning(f"Deepfake detected in image: {file_path}")
-        return DetectionResult(is_safe=False, reason="Detected deepfake image. Upload rejected.")
+    try:
+        is_deepfake = deepfake_detector.detect(file_path)
+        if is_deepfake:
+            logger.warning(f"Deepfake detected in image: {file_path}")
+            return DetectionResult(is_safe=False, reason="Detected deepfake image. Upload rejected.")
+    except Exception as e:
+        logger.error(f"Error during deepfake detection: {str(e)}")
+        if os.getenv("REJECT_ON_ERROR", "False").lower() == "true":
+            return DetectionResult(is_safe=False, reason="Error processing image during deepfake detection. Upload rejected.")
     
     # Check for NSFW content
-    is_nsfw = nsfw_detector.detect(file_path)
-    if is_nsfw:
-        logger.warning(f"NSFW content detected in image: {file_path}")
-        return DetectionResult(is_safe=False, reason="Detected explicit content. Upload rejected.")
+    try:
+        is_nsfw = nsfw_detector.detect(file_path)
+        if is_nsfw:
+            logger.warning(f"NSFW content detected in image: {file_path}")
+            return DetectionResult(is_safe=False, reason="Detected explicit content. Upload rejected.")
+    except Exception as e:
+        logger.error(f"Error during NSFW detection: {str(e)}")
+        if os.getenv("REJECT_ON_ERROR", "False").lower() == "true":
+            return DetectionResult(is_safe=False, reason="Error processing image during NSFW detection. Upload rejected.")
     
     # If both checks pass, the image is safe
     logger.info(f"Image passed safety checks: {file_path}")
@@ -235,14 +259,45 @@ async def upload_image(
     temp_file_path = f"{TEMP_DIR}/{uuid4().hex}_{file.filename}"
     
     try:
+        # Create temp directory if it doesn't exist
+        os.makedirs(TEMP_DIR, exist_ok=True)
+        
         # Save the file
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
         logger.info(f"Temporary file saved: {temp_file_path}")
         
+        # Make sure the file was properly saved
+        if not os.path.exists(temp_file_path):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save uploaded file"
+            )
+            
+        # Check if file is a valid image
+        try:
+            from PIL import Image
+            img = Image.open(temp_file_path)
+            img.verify()  # Verify it's an image
+        except Exception as e:
+            background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+            logger.error(f"Invalid image file: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid image file. Please upload a valid image."
+            )
+        
         # Check image safety (deepfake and NSFW detection)
-        safety_result = await check_image_safety(temp_file_path)
+        try:
+            safety_result = await check_image_safety(temp_file_path)
+        except Exception as e:
+            background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+            logger.error(f"Error checking image safety: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error processing image: {str(e)}"
+            )
         
         if not safety_result.is_safe:
             # Schedule cleanup in the background
@@ -255,6 +310,7 @@ async def upload_image(
             )
         
         # If the image passes safety checks, save it permanently
+        os.makedirs(UPLOAD_DIR, exist_ok=True)  # Ensure upload directory exists
         final_filename = f"{uuid4().hex}_{file.filename}"
         final_path = f"{UPLOAD_DIR}/{final_filename}"
         shutil.copy(temp_file_path, final_path)
@@ -281,14 +337,14 @@ async def upload_image(
         raise
     except Exception as e:
         # Clean up the temporary file if it exists
-        background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+        if os.path.exists(temp_file_path):
+            background_tasks.add_task(cleanup_temp_files, [temp_file_path])
         
         logger.error(f"Error processing image: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing image: {str(e)}"
         )
-
 @app.get("/feed/", response_model=List[Post])
 async def get_feed(current_user: User = Depends(get_current_active_user)):
     # In a real app, you'd filter the feed based on followed users
