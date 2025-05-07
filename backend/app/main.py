@@ -11,10 +11,10 @@ import os
 import shutil
 from uuid import uuid4
 import logging
+from dotenv import load_dotenv
 
-# Import AI services
-from app.services.deepfake import DeepfakeDetector
-from app.services.nsfw import NSFWDetector
+# Load environment variables from .env file
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(
@@ -24,12 +24,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger("SafeGram")
 
+# Import AI services
+from app.services.deepfake import DeepfakeDetector
+from app.services.nsfw import NSFWDetector
+
 # Create the FastAPI app
 app = FastAPI(title="SafeGram API")
 
 # Set up upload directory
-UPLOAD_DIR = "uploads"
-TEMP_DIR = "temp_uploads"
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+TEMP_DIR = os.getenv("TEMP_DIR", "temp_uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
 
@@ -46,9 +50,9 @@ app.add_middleware(
 )
 
 # Security setup
-SECRET_KEY = "your-secret-key"  # Change this in production!
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")  # Change this in production!
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -58,9 +62,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 fake_users_db = {}
 posts_db = []
 
-# Initialize AI detectors
-deepfake_detector = DeepfakeDetector()
-nsfw_detector = NSFWDetector()
+# Initialize AI detectors with environment configuration
+MODEL_DIR = os.getenv("AI_MODEL_DIR", "app/services/models")
+deepfake_detector = DeepfakeDetector(
+    model_path=os.path.join(MODEL_DIR, "deepfake_model.h5")
+)
+nsfw_detector = NSFWDetector(
+    model_path=os.path.join(MODEL_DIR, "nsfw_model.h5")
+)
 
 # Models
 class User(BaseModel):
