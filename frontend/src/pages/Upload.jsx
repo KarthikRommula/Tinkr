@@ -117,8 +117,12 @@ function Upload() {
       
       if (error.response && error.response.data && error.response.data.detail) {
         setError(error.response.data.detail);
+      } else if (error.response && error.response.status === 400) {
+        setError('Image rejected by our AI safety system. Please make sure your image meets our community guidelines.');
+      } else if (error.response && error.response.status === 500) {
+        setError('Server error. Our AI image detection system may be unavailable. Please try again later.');
       } else {
-        setError('Failed to upload image. Please try again.');
+        setError('Failed to upload image. Please try again later.');
       }
     } finally {
       setLoading(false);
@@ -311,7 +315,8 @@ function Upload() {
             </p>
           </div>
         </div>
-        <p className="text-sm">Images that violate our community standards will be automatically rejected to maintain a safe environment for all users.</p>
+        <p className="text-sm mb-2">Images that violate our community standards will be automatically rejected to maintain a safe environment for all users.</p>
+        <p className="text-sm font-semibold">Note: This system relies on advanced AI models that must be available for uploads to work. If the AI detection system is unavailable, uploads will be temporarily rejected for safety.</p>
       </div>
       
       <div className="text-sm text-gray-500 mt-4">

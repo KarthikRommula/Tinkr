@@ -30,16 +30,15 @@ try:
             logger.info("Keras successfully loaded as alternative")
         except ImportError:
             TENSORFLOW_AVAILABLE = False
-            logger.warning("TensorFlow keras modules not properly installed. Using fallback NSFW detection.")
+            logger.warning("TensorFlow keras modules not properly installed. Cannot perform NSFW detection.")
 except ImportError:
     TENSORFLOW_AVAILABLE = False
-    logger.warning("TensorFlow not available. Using fallback NSFW detection.")
+    logger.warning("TensorFlow not available. Cannot perform NSFW detection.")
 
 class NSFWDetector:
     def __init__(self, model_path=None):
         """
         Initialize the NSFW content detector with a pre-trained model.
-        If model_path is None or TensorFlow is not available, use a placeholder implementation.
         """
         self.model = None
         
@@ -57,10 +56,9 @@ class NSFWDetector:
                     self.model = tf.keras.models.load_model(self.model_path)
                     logger.info(f"Loaded NSFW detection model from {self.model_path}")
                 else:
-                    logger.warning(f"Model file not found at: {self.model_path}. Using fallback detection.")
+                    logger.error(f"Model file not found at: {self.model_path}")
             except Exception as e:
                 logger.error(f"Error loading model: {str(e)}")
-                logger.warning("Using placeholder implementation instead")
     
     def detect(self, image_path, threshold=0.5):
         """
@@ -78,8 +76,8 @@ class NSFWDetector:
         
         # If no model and no TensorFlow, reject by default for safety
         if not TENSORFLOW_AVAILABLE or self.model is None:
-            logger.warning("No NSFW detection model available - using fallback detection")
-            return self._alternative_detection(image_path)
+            logger.error("No NSFW detection model available - rejecting upload")
+            return True  # Reject the image
             
         try:
             # Load image and check if it's valid
@@ -118,35 +116,3 @@ class NSFWDetector:
         finally:
             processing_time = time.time() - start_time
             logger.info(f"NSFW detection processing time: {processing_time:.2f} seconds")
-            
-    def _alternative_detection(self, image_path):
-        """
-        A simple alternative detection method based on image properties
-        Used as a fallback when main detection isn't available
-        """
-        try:
-            # Simple heuristics that might indicate NSFW content
-            # This is very basic and should be replaced with a real model
-            image = cv2.imread(image_path)
-            if image is None:
-                return True  # Reject
-                
-            # Check for skin tone percentage - high percentage might indicate NSFW
-            # This is just a placeholder - not a real detection method
-            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-            skin_lower = np.array([0, 20, 70], np.uint8)
-            skin_upper = np.array([20, 150, 255], np.uint8)
-            skin_mask = cv2.inRange(hsv, skin_lower, skin_upper)
-            
-            skin_percentage = (np.sum(skin_mask > 0) / (skin_mask.shape[0] * skin_mask.shape[1])) * 100
-            
-            # Unusually high percentage of skin tones might be suspicious
-            if skin_percentage > 60:
-                logger.warning(f"High skin percentage detected: {skin_percentage:.2f}%")
-                return True
-                
-            return False
-            
-        except Exception as e:
-            logger.error(f"Error in alternative detection: {str(e)}")
-            return True  # Reject on error

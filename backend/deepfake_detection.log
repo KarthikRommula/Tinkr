@@ -34,3 +34,46 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-07 10:30:52,444 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/ef97a1400d5f4f3b99bf56d5dbd59323_PASSPORT PHOTO.jpg
 2025-05-07 10:30:52,444 - DeepfakeDetector - WARNING - No deepfake detection model available - rejecting for safety
 2025-05-07 10:30:52,444 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/ef97a1400d5f4f3b99bf56d5dbd59323_PASSPORT PHOTO.jpg
+2025-05-07 14:40:46,955 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:40:46,958 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:40:46,964 - DeepfakeDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\deepfake_model.h5
+2025-05-07 14:40:46,990 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-07 14:40:46,991 - DeepfakeDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:40:46,991 - NSFWDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\nsfw_model.h5
+2025-05-07 14:40:46,991 - NSFWDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:43:13,354 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-07 14:44:16,811 - SafeGram - INFO - Temporary file saved: temp_uploads/ef68826a8e4146bfa4517a9f7cd64838_fake_1024 copy.jpg
+2025-05-07 14:44:16,811 - SafeGram - INFO - Checking image safety: temp_uploads/ef68826a8e4146bfa4517a9f7cd64838_fake_1024 copy.jpg
+2025-05-07 14:44:16,811 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/ef68826a8e4146bfa4517a9f7cd64838_fake_1024 copy.jpg
+2025-05-07 14:44:16,811 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:44:16,811 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/ef68826a8e4146bfa4517a9f7cd64838_fake_1024 copy.jpg
+2025-05-07 14:44:31,427 - SafeGram - INFO - Temporary file saved: temp_uploads/b346ad564c5440c7ac8df9047f8858f4_fake_1024 copy.jpg
+2025-05-07 14:44:31,427 - SafeGram - INFO - Checking image safety: temp_uploads/b346ad564c5440c7ac8df9047f8858f4_fake_1024 copy.jpg
+2025-05-07 14:44:31,427 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/b346ad564c5440c7ac8df9047f8858f4_fake_1024 copy.jpg
+2025-05-07 14:44:31,427 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:44:31,427 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/b346ad564c5440c7ac8df9047f8858f4_fake_1024 copy.jpg
+2025-05-07 14:44:35,070 - SafeGram - INFO - Temporary file saved: temp_uploads/985a5a81d00548cd923b6a71cb1e9f91_fake_1024 copy.jpg
+2025-05-07 14:44:35,070 - SafeGram - INFO - Checking image safety: temp_uploads/985a5a81d00548cd923b6a71cb1e9f91_fake_1024 copy.jpg
+2025-05-07 14:44:35,070 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/985a5a81d00548cd923b6a71cb1e9f91_fake_1024 copy.jpg
+2025-05-07 14:44:35,070 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:44:35,070 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/985a5a81d00548cd923b6a71cb1e9f91_fake_1024 copy.jpg
+2025-05-07 14:45:30,398 - SafeGram - INFO - Temporary file saved: temp_uploads/440c618395cc433ab1d6f4c63ec56297_WhatsApp Image 2025-03-28 at 01.40.22_fd180e94.jpg
+2025-05-07 14:45:30,398 - SafeGram - INFO - Checking image safety: temp_uploads/440c618395cc433ab1d6f4c63ec56297_WhatsApp Image 2025-03-28 at 01.40.22_fd180e94.jpg
+2025-05-07 14:45:30,399 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/440c618395cc433ab1d6f4c63ec56297_WhatsApp Image 2025-03-28 at 01.40.22_fd180e94.jpg
+2025-05-07 14:45:30,399 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:45:30,399 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/440c618395cc433ab1d6f4c63ec56297_WhatsApp Image 2025-03-28 at 01.40.22_fd180e94.jpg
+2025-05-07 14:46:12,090 - SafeGram - INFO - Temporary file saved: temp_uploads/0a8c5945dd44420198852405f9677a37_real_1005.jpg
+2025-05-07 14:46:12,090 - SafeGram - INFO - Checking image safety: temp_uploads/0a8c5945dd44420198852405f9677a37_real_1005.jpg
+2025-05-07 14:46:12,090 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/0a8c5945dd44420198852405f9677a37_real_1005.jpg
+2025-05-07 14:46:12,090 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:46:12,090 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/0a8c5945dd44420198852405f9677a37_real_1005.jpg
+2025-05-07 14:46:49,249 - SafeGram - INFO - Temporary file saved: temp_uploads/f9fffa9f08884c18856dc83ec4295b5b_WhatsApp Image 2025-03-31 at 13.36.22_89517ac4.jpg
+2025-05-07 14:46:49,249 - SafeGram - INFO - Checking image safety: temp_uploads/f9fffa9f08884c18856dc83ec4295b5b_WhatsApp Image 2025-03-31 at 13.36.22_89517ac4.jpg
+2025-05-07 14:46:49,249 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/f9fffa9f08884c18856dc83ec4295b5b_WhatsApp Image 2025-03-31 at 13.36.22_89517ac4.jpg
+2025-05-07 14:46:49,249 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:46:49,249 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/f9fffa9f08884c18856dc83ec4295b5b_WhatsApp Image 2025-03-31 at 13.36.22_89517ac4.jpg
