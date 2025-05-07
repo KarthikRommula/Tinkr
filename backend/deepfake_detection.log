@@ -77,3 +77,58 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-07 14:46:49,249 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/f9fffa9f08884c18856dc83ec4295b5b_WhatsApp Image 2025-03-31 at 13.36.22_89517ac4.jpg
 2025-05-07 14:46:49,249 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
 2025-05-07 14:46:49,249 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/f9fffa9f08884c18856dc83ec4295b5b_WhatsApp Image 2025-03-31 at 13.36.22_89517ac4.jpg
+2025-05-07 14:51:54,874 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:51:54,875 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:51:54,878 - DeepfakeDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\deepfake_model.h5
+2025-05-07 14:51:54,896 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-07 14:51:54,897 - DeepfakeDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:51:54,897 - NSFWDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\nsfw_model.h5
+2025-05-07 14:51:54,897 - NSFWDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:52:37,613 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-07 14:53:10,976 - SafeGram - INFO - Temporary file saved: temp_uploads/03fecc2d6bd6464aafb67e498e081785_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:53:10,976 - SafeGram - INFO - Checking image safety: temp_uploads/03fecc2d6bd6464aafb67e498e081785_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:53:10,976 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/03fecc2d6bd6464aafb67e498e081785_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:53:10,976 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:53:10,976 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/03fecc2d6bd6464aafb67e498e081785_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:55:02,145 - SafeGram - INFO - Temporary file saved: temp_uploads/73d69e820d9244fea1bcb8758323151c_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:55:02,145 - SafeGram - INFO - Checking image safety: temp_uploads/73d69e820d9244fea1bcb8758323151c_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:55:02,145 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/73d69e820d9244fea1bcb8758323151c_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:55:02,145 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:55:02,145 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/73d69e820d9244fea1bcb8758323151c_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:55:51,178 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:55:51,178 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:55:51,184 - DeepfakeDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\deepfake_model.h5
+2025-05-07 14:55:51,203 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-07 14:55:51,204 - DeepfakeDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:55:51,205 - NSFWDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\nsfw_model.h5
+2025-05-07 14:55:51,205 - NSFWDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:56:22,019 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:56:22,019 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:56:22,021 - DeepfakeDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\deepfake_model.h5
+2025-05-07 14:56:22,042 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-07 14:56:22,042 - DeepfakeDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:56:22,042 - NSFWDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\nsfw_model.h5
+2025-05-07 14:56:22,042 - NSFWDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:56:36,671 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:56:36,672 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-07 14:56:36,674 - DeepfakeDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\deepfake_model.h5
+2025-05-07 14:56:36,694 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-07 14:56:36,695 - DeepfakeDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:56:36,695 - NSFWDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\nsfw_model.h5
+2025-05-07 14:56:36,695 - NSFWDetector - ERROR - Error loading model: Unable to synchronously open file (file signature not found)
+2025-05-07 14:57:20,411 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-07 14:57:40,854 - SafeGram - INFO - Temporary file saved: temp_uploads/63fc27ffaac6446cbe50d666b81ab2e1_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:57:40,855 - SafeGram - INFO - Checking image safety: temp_uploads/63fc27ffaac6446cbe50d666b81ab2e1_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:57:40,855 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/63fc27ffaac6446cbe50d666b81ab2e1_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg
+2025-05-07 14:57:40,855 - DeepfakeDetector - ERROR - No deepfake detection model available - rejecting upload
+2025-05-07 14:57:40,855 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/63fc27ffaac6446cbe50d666b81ab2e1_KARTHIK_ROMMULA-62ea05db-04-2025 (2)_page-0001.jpg

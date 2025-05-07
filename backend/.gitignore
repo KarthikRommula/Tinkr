@@ -5,3 +5,5 @@
 /.pytest_cache/
 /uploads
 /uploads/*
+temp_uploads
+temp_uploads/*
