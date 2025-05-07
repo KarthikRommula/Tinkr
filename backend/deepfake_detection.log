@@ -1,0 +1,36 @@
+2025-05-07 10:28:35,070 - DeepfakeDetector - WARNING - TensorFlow not available. Using fallback deepfake detection.
+2025-05-07 10:28:35,128 - NSFWDetector - WARNING - TensorFlow keras modules not properly installed. Using fallback NSFW detection.
+2025-05-07 10:28:35,137 - DeepfakeDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\deepfake_model.h5
+2025-05-07 10:28:35,170 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-07 10:28:35,170 - NSFWDetector - INFO - Using default model path: C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\app\services\models\nsfw_model.h5
+2025-05-07 10:29:14,995 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\Documents\CODE\Tinkr\backend\venv\Lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-07 10:29:48,842 - SafeGram - INFO - Temporary file saved: temp_uploads/2f679af8b677465a98d33052448b093d_2.jpg
+2025-05-07 10:29:48,842 - SafeGram - INFO - Checking image safety: temp_uploads/2f679af8b677465a98d33052448b093d_2.jpg
+2025-05-07 10:29:48,844 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/2f679af8b677465a98d33052448b093d_2.jpg
+2025-05-07 10:29:48,844 - DeepfakeDetector - WARNING - No deepfake detection model available - rejecting for safety
+2025-05-07 10:29:48,844 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/2f679af8b677465a98d33052448b093d_2.jpg
+2025-05-07 10:30:10,832 - SafeGram - INFO - Temporary file saved: temp_uploads/0561f062717b4b34bb45d4e151d10cd1_2.jpg
+2025-05-07 10:30:10,833 - SafeGram - INFO - Checking image safety: temp_uploads/0561f062717b4b34bb45d4e151d10cd1_2.jpg
+2025-05-07 10:30:10,834 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/0561f062717b4b34bb45d4e151d10cd1_2.jpg
+2025-05-07 10:30:10,834 - DeepfakeDetector - WARNING - No deepfake detection model available - rejecting for safety
+2025-05-07 10:30:10,834 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/0561f062717b4b34bb45d4e151d10cd1_2.jpg
+2025-05-07 10:30:13,364 - SafeGram - INFO - Temporary file saved: temp_uploads/4a1b207048264c18a45bcaf7e397bc64_2.jpg
+2025-05-07 10:30:13,365 - SafeGram - INFO - Checking image safety: temp_uploads/4a1b207048264c18a45bcaf7e397bc64_2.jpg
+2025-05-07 10:30:13,365 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/4a1b207048264c18a45bcaf7e397bc64_2.jpg
+2025-05-07 10:30:13,365 - DeepfakeDetector - WARNING - No deepfake detection model available - rejecting for safety
+2025-05-07 10:30:13,365 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/4a1b207048264c18a45bcaf7e397bc64_2.jpg
+2025-05-07 10:30:24,547 - SafeGram - INFO - Temporary file saved: temp_uploads/c27008e3efed4be5960115dff6eb3365_fake_1017.jpg
+2025-05-07 10:30:24,547 - SafeGram - INFO - Checking image safety: temp_uploads/c27008e3efed4be5960115dff6eb3365_fake_1017.jpg
+2025-05-07 10:30:24,547 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/c27008e3efed4be5960115dff6eb3365_fake_1017.jpg
+2025-05-07 10:30:24,547 - DeepfakeDetector - WARNING - No deepfake detection model available - rejecting for safety
+2025-05-07 10:30:24,547 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/c27008e3efed4be5960115dff6eb3365_fake_1017.jpg
+2025-05-07 10:30:52,444 - SafeGram - INFO - Temporary file saved: temp_uploads/ef97a1400d5f4f3b99bf56d5dbd59323_PASSPORT PHOTO.jpg
+2025-05-07 10:30:52,444 - SafeGram - INFO - Checking image safety: temp_uploads/ef97a1400d5f4f3b99bf56d5dbd59323_PASSPORT PHOTO.jpg
+2025-05-07 10:30:52,444 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/ef97a1400d5f4f3b99bf56d5dbd59323_PASSPORT PHOTO.jpg
+2025-05-07 10:30:52,444 - DeepfakeDetector - WARNING - No deepfake detection model available - rejecting for safety
+2025-05-07 10:30:52,444 - SafeGram - WARNING - Deepfake detected in image: temp_uploads/ef97a1400d5f4f3b99bf56d5dbd59323_PASSPORT PHOTO.jpg
