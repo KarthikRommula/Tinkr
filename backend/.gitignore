@@ -9,3 +9,7 @@ temp_uploads
 temp_uploads/*
 models
 models/*
+/temp_uploads
+/test_images
+/test_images/*
+/test_images/*

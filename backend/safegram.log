@@ -1,0 +1,48 @@
+2025-05-08 00:20:26,522 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:20:26,522 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:20:26,522 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:20:26,522 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:20:26,709 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:20:26,709 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:20:26,762 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:21:10,025 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\passlib\handlers\bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2025-05-08 00:21:32,137 - SafeGram - INFO - Temporary file saved: temp_uploads/7b584ce9929c4c03a7057209c9bc3973_fake_1024.jpg
+2025-05-08 00:21:32,137 - SafeGram - INFO - Checking image safety: temp_uploads/7b584ce9929c4c03a7057209c9bc3973_fake_1024.jpg
+2025-05-08 00:21:32,137 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/7b584ce9929c4c03a7057209c9bc3973_fake_1024.jpg
+2025-05-08 00:21:32,137 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:21:32,137 - NSFWDetector - INFO - Checking image for NSFW content: temp_uploads/7b584ce9929c4c03a7057209c9bc3973_fake_1024.jpg
+2025-05-08 00:21:32,137 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:21:32,137 - SafeGram - INFO - Image passed safety checks: temp_uploads/7b584ce9929c4c03a7057209c9bc3973_fake_1024.jpg
+2025-05-08 00:21:32,137 - SafeGram - INFO - Post created successfully: 7b1b5504-fd3d-4f54-b434-87133af4d378
+2025-05-08 00:21:32,137 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/7b584ce9929c4c03a7057209c9bc3973_fake_1024.jpg
+2025-05-08 00:23:01,659 - SafeGram - INFO - Temporary file saved: temp_uploads/903d2737dc0345e99af03063b01e65f3_2.jpg
+2025-05-08 00:23:01,659 - SafeGram - INFO - Checking image safety: temp_uploads/903d2737dc0345e99af03063b01e65f3_2.jpg
+2025-05-08 00:23:01,659 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/903d2737dc0345e99af03063b01e65f3_2.jpg
+2025-05-08 00:23:01,659 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:23:01,659 - NSFWDetector - INFO - Checking image for NSFW content: temp_uploads/903d2737dc0345e99af03063b01e65f3_2.jpg
+2025-05-08 00:23:01,659 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:23:01,659 - SafeGram - INFO - Image passed safety checks: temp_uploads/903d2737dc0345e99af03063b01e65f3_2.jpg
+2025-05-08 00:23:01,659 - SafeGram - INFO - Post created successfully: 13bfc77b-f9a6-4bf2-a5d7-2472826e71a1
+2025-05-08 00:23:01,659 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/903d2737dc0345e99af03063b01e65f3_2.jpg
+2025-05-08 00:23:19,212 - SafeGram - INFO - Temporary file saved: temp_uploads/0cc1e609a4ff4a6abf55dcb05fc3c834_fake_1016.jpg
+2025-05-08 00:23:19,212 - SafeGram - INFO - Checking image safety: temp_uploads/0cc1e609a4ff4a6abf55dcb05fc3c834_fake_1016.jpg
+2025-05-08 00:23:19,212 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/0cc1e609a4ff4a6abf55dcb05fc3c834_fake_1016.jpg
+2025-05-08 00:23:19,212 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:23:19,212 - NSFWDetector - INFO - Checking image for NSFW content: temp_uploads/0cc1e609a4ff4a6abf55dcb05fc3c834_fake_1016.jpg
+2025-05-08 00:23:19,212 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:23:19,212 - SafeGram - INFO - Image passed safety checks: temp_uploads/0cc1e609a4ff4a6abf55dcb05fc3c834_fake_1016.jpg
+2025-05-08 00:23:19,212 - SafeGram - INFO - Post created successfully: bdaa2eee-1d34-423d-b21c-4160d55828f4
+2025-05-08 00:23:19,212 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/0cc1e609a4ff4a6abf55dcb05fc3c834_fake_1016.jpg
+2025-05-08 00:24:35,001 - SafeGram - INFO - Temporary file saved: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
+2025-05-08 00:24:35,001 - SafeGram - INFO - Checking image safety: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
+2025-05-08 00:24:35,001 - DeepfakeDetector - INFO - Checking image for deepfakes: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
+2025-05-08 00:24:35,001 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:24:35,001 - NSFWDetector - INFO - Checking image for NSFW content: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
+2025-05-08 00:24:35,001 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:24:35,001 - SafeGram - INFO - Image passed safety checks: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg
+2025-05-08 00:24:35,001 - SafeGram - INFO - Post created successfully: bed58de1-ee39-4958-bc06-a1383a80ca81
+2025-05-08 00:24:35,001 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/2f1b435e3ea54f8797608694a5cea5eb_6.jpg

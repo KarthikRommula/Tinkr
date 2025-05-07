@@ -298,3 +298,51 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-07 15:58:21,000 - SafeGram - INFO - Image passed safety checks: temp_uploads/d2127a287f5c413a8cb3fff6bd9e9e9c_fake_1024.jpg
 2025-05-07 15:58:21,003 - SafeGram - INFO - Post created successfully: 292a98e2-2806-442c-8913-3cf4159a4822
 2025-05-07 15:58:21,004 - SafeGram - INFO - Cleaned up temporary file: temp_uploads/d2127a287f5c413a8cb3fff6bd9e9e9c_fake_1024.jpg
+2025-05-08 00:16:33,369 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:16:33,369 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:16:33,369 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:16:33,369 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:16:33,492 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:16:33,492 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:16:33,555 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:16:33,555 - DetectionTest - INFO - Testing deepfake detection...
+2025-05-08 00:16:33,555 - DeepfakeDetector - INFO - Checking image for deepfakes: test_images/sample.jpg
+2025-05-08 00:16:33,555 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:16:33,555 - DetectionTest - INFO - Deepfake detection result: Accepted
+2025-05-08 00:16:33,555 - DetectionTest - INFO - Testing NSFW detection...
+2025-05-08 00:16:33,555 - NSFWDetector - INFO - Checking image for NSFW content: test_images/sample.jpg
+2025-05-08 00:16:33,555 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:16:33,555 - DetectionTest - INFO - NSFW detection result: Accepted
+2025-05-08 00:16:33,555 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED
+2025-05-08 00:18:40,589 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:18:40,589 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:18:40,589 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:18:40,589 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:18:40,712 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:18:40,712 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:18:40,796 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:18:40,796 - DetectionTest - INFO - Testing deepfake detection...
+2025-05-08 00:18:40,796 - DeepfakeDetector - INFO - Checking image for deepfakes: test_images/3.jpg
+2025-05-08 00:18:40,796 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:18:40,796 - DetectionTest - INFO - Deepfake detection result: Accepted
+2025-05-08 00:18:40,796 - DetectionTest - INFO - Testing NSFW detection...
+2025-05-08 00:18:40,796 - NSFWDetector - INFO - Checking image for NSFW content: test_images/3.jpg
+2025-05-08 00:18:40,796 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:18:40,796 - DetectionTest - INFO - NSFW detection result: Accepted
+2025-05-08 00:18:40,796 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED
+2025-05-08 00:19:27,371 - DeepfakeDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:19:27,382 - NSFWDetector - INFO - TensorFlow successfully loaded
+2025-05-08 00:19:27,382 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:19:27,382 - DeepfakeDetector - ERROR - Error initializing face detector: module 'cv2' has no attribute 'data'
+2025-05-08 00:19:27,512 - DeepfakeDetector - INFO - Loaded deepfake detection model from app/services/models\deepfake_model.h5
+2025-05-08 00:19:27,512 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:19:27,587 - NSFWDetector - INFO - Loaded NSFW detection model from app/services/models\nsfw_model.h5
+2025-05-08 00:19:27,587 - DetectionTest - INFO - Testing deepfake detection...
+2025-05-08 00:19:27,587 - DeepfakeDetector - INFO - Checking image for deepfakes: test_images/sample.jpg
+2025-05-08 00:19:27,587 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:19:27,587 - DetectionTest - INFO - Deepfake detection result: Accepted
+2025-05-08 00:19:27,587 - DetectionTest - INFO - Testing NSFW detection...
+2025-05-08 00:19:27,587 - NSFWDetector - INFO - Checking image for NSFW content: test_images/sample.jpg
+2025-05-08 00:19:27,587 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:19:27,587 - DetectionTest - INFO - NSFW detection result: Accepted
+2025-05-08 00:19:27,587 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED
