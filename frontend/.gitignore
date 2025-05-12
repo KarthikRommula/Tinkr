@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+*.log
+logs/
+temp_uploads/*
+uploads/*
+test_images/*
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+.DS_Store

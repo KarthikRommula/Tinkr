@@ -15,7 +15,7 @@ function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     // Implement search functionality here
-    console.log('Searching for:', searchQuery);
+    
     // For now, just clear the search box
     setSearchQuery('');
   };

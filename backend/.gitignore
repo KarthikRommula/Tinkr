@@ -13,3 +13,13 @@ models/*
 /test_images
 /test_images/*
 /test_images/*
+*.log
+logs/
+temp_uploads/*
+uploads/*
+test_images/*
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+.DS_Store
+__pycache__

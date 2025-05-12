@@ -26,8 +26,8 @@ logging.basicConfig(
 logger = logging.getLogger("SafeGram")
 
 # Import AI services
-from app.services.deepfake import DeepfakeDetector
-from app.services.nsfw import NSFWDetector
+from app.services.improved_deepfake import ImprovedDeepfakeDetector
+from app.services.improved_nsfw import ImprovedNSFWDetector
 
 # Create the FastAPI app
 app = FastAPI(title="SafeGram API")
@@ -65,11 +65,11 @@ posts_db = []
 
 # Initialize AI detectors with environment configuration
 MODEL_DIR = os.getenv("AI_MODEL_DIR", "app/services/models")
-deepfake_detector = DeepfakeDetector(
-    model_path=os.path.join(MODEL_DIR, "deepfake_model.h5")
+deepfake_detector = ImprovedDeepfakeDetector(
+    model_path=os.path.join(MODEL_DIR, "improved_deepfake_model.h5")
 )
-nsfw_detector = NSFWDetector(
-    model_path=os.path.join(MODEL_DIR, "nsfw_model.h5")
+nsfw_detector = ImprovedNSFWDetector(
+    model_path=os.path.join(MODEL_DIR, "improved_nsfw_model.h5")
 )
 
 # Models
@@ -175,15 +175,17 @@ async def check_image_safety(file_path: str) -> DetectionResult:
         # In development mode, can bypass both checks if configured to do so
         if os.getenv("ALWAYS_PASS_DEEPFAKE", "False").lower() == "true" and \
            os.getenv("ALWAYS_PASS_NSFW", "False").lower() == "true":
-            logger.info("Development mode: bypassing all image safety checks")
+            logger.info("Development mode: Bypassing all safety checks")
             return DetectionResult(is_safe=True)
     
     # Check for deepfakes
     try:
-        is_deepfake = deepfake_detector.detect(file_path)
+        # Get threshold from environment variable
+        deepfake_threshold = float(os.getenv("DEEPFAKE_THRESHOLD", "0.6"))
+        is_deepfake, deepfake_confidence = deepfake_detector.detect(file_path, threshold=deepfake_threshold)
         if is_deepfake:
-            logger.warning(f"Deepfake detected in image: {file_path}")
-            return DetectionResult(is_safe=False, reason="Detected deepfake image. Upload rejected.")
+            logger.warning(f"Deepfake detected in image: {file_path} with confidence: {deepfake_confidence:.4f}")
+            return DetectionResult(is_safe=False, reason=f"Detected manipulated content with {deepfake_confidence:.2f} confidence. Upload rejected.")
     except Exception as e:
         logger.error(f"Error during deepfake detection: {str(e)}")
         if os.getenv("REJECT_ON_ERROR", "False").lower() == "true":
@@ -191,10 +193,12 @@ async def check_image_safety(file_path: str) -> DetectionResult:
     
     # Check for NSFW content
     try:
-        is_nsfw = nsfw_detector.detect(file_path)
+        # Get threshold from environment variable
+        nsfw_threshold = float(os.getenv("NSFW_THRESHOLD", "0.6"))
+        is_nsfw, nsfw_confidence = nsfw_detector.detect(file_path, threshold=nsfw_threshold)
         if is_nsfw:
-            logger.warning(f"NSFW content detected in image: {file_path}")
-            return DetectionResult(is_safe=False, reason="Detected explicit content. Upload rejected.")
+            logger.warning(f"NSFW content detected in image: {file_path} with confidence: {nsfw_confidence:.4f}")
+            return DetectionResult(is_safe=False, reason=f"Detected explicit content with {nsfw_confidence:.2f} confidence. Upload rejected.")
     except Exception as e:
         logger.error(f"Error during NSFW detection: {str(e)}")
         if os.getenv("REJECT_ON_ERROR", "False").lower() == "true":
