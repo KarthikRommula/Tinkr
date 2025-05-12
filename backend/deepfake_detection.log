@@ -378,3 +378,45 @@ AttributeError: module 'bcrypt' has no attribute '__about__'
 2025-05-08 00:49:52,890 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
 2025-05-08 00:49:52,890 - DetectionTest - INFO - NSFW detection result: Accepted
 2025-05-08 00:49:52,890 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED
+2025-05-08 00:56:40,100 - DeepfakeDetector - WARNING - TensorFlow not available. Cannot perform deepfake detection.
+2025-05-08 00:56:40,100 - NSFWDetector - WARNING - TensorFlow not available. Cannot perform NSFW detection.
+2025-05-08 00:56:40,103 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:56:40,121 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-08 00:56:40,121 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:56:40,121 - DetectionTest - INFO - Testing deepfake detection...
+2025-05-08 00:56:40,121 - DeepfakeDetector - INFO - Checking image for deepfakes: test_images\test_gradient.jpg
+2025-05-08 00:56:40,121 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:56:40,121 - DetectionTest - INFO - Deepfake detection result: Accepted
+2025-05-08 00:56:40,121 - DetectionTest - INFO - Testing NSFW detection...
+2025-05-08 00:56:40,121 - NSFWDetector - INFO - Checking image for NSFW content: test_images\test_gradient.jpg
+2025-05-08 00:56:40,121 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:56:40,121 - DetectionTest - INFO - NSFW detection result: Accepted
+2025-05-08 00:56:40,121 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED
+2025-05-08 00:58:34,455 - DeepfakeDetector - WARNING - TensorFlow not available. Cannot perform deepfake detection.
+2025-05-08 00:58:34,457 - NSFWDetector - WARNING - TensorFlow not available. Cannot perform NSFW detection.
+2025-05-08 00:58:34,459 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:58:34,476 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-08 00:58:34,476 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:58:34,476 - DetectionTest - INFO - Testing deepfake detection...
+2025-05-08 00:58:34,476 - DeepfakeDetector - INFO - Checking image for deepfakes: test_images\test_gradient.jpg
+2025-05-08 00:58:34,476 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:58:34,476 - DetectionTest - INFO - Deepfake detection result: Accepted
+2025-05-08 00:58:34,476 - DetectionTest - INFO - Testing NSFW detection...
+2025-05-08 00:58:34,476 - NSFWDetector - INFO - Checking image for NSFW content: test_images\test_gradient.jpg
+2025-05-08 00:58:34,476 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:58:34,476 - DetectionTest - INFO - NSFW detection result: Accepted
+2025-05-08 00:58:34,476 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED
+2025-05-08 00:59:44,189 - DeepfakeDetector - WARNING - TensorFlow not available. Cannot perform deepfake detection.
+2025-05-08 00:59:44,189 - NSFWDetector - WARNING - TensorFlow not available. Cannot perform NSFW detection.
+2025-05-08 00:59:44,189 - DeepfakeDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:59:44,205 - DeepfakeDetector - INFO - Loaded face detection model from C:\Users\KARTHIK\anaconda3\envs\myenv\lib\site-packages\cv2\data\haarcascade_frontalface_default.xml
+2025-05-08 00:59:44,205 - NSFWDetector - INFO - Running in development mode - detection may be bypassed
+2025-05-08 00:59:44,205 - DetectionTest - INFO - Testing deepfake detection...
+2025-05-08 00:59:44,205 - DeepfakeDetector - INFO - Checking image for deepfakes: test_images\test_gradient.jpg
+2025-05-08 00:59:44,205 - DeepfakeDetector - INFO - Development mode - bypassing deepfake detection
+2025-05-08 00:59:44,205 - DetectionTest - INFO - Deepfake detection result: Accepted
+2025-05-08 00:59:44,205 - DetectionTest - INFO - Testing NSFW detection...
+2025-05-08 00:59:44,205 - NSFWDetector - INFO - Checking image for NSFW content: test_images\test_gradient.jpg
+2025-05-08 00:59:44,205 - NSFWDetector - INFO - Development mode - bypassing NSFW detection
+2025-05-08 00:59:44,205 - DetectionTest - INFO - NSFW detection result: Accepted
+2025-05-08 00:59:44,205 - DetectionTest - INFO - OVERALL RESULT: Image would be ACCEPTED

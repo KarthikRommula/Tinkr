@@ -1,4 +1,4 @@
-# improved_placeholder_models.py (updated version)
+# improved_placeholder_models.py
 import os
 import logging
 import numpy as np
@@ -28,24 +28,14 @@ def create_placeholder_model(name, input_shape, model_dir="app/services/models")
     # Check if model already exists
     if os.path.exists(model_path):
         logger.info(f"Model already exists at {model_path}")
-        try:
-            # Try to load the model to verify it's valid
-            test_model = tf.keras.models.load_model(model_path)
-            # Test with a dummy input
-            dummy_input = np.zeros((1,) + input_shape)
-            _ = test_model.predict(dummy_input)
-            logger.info(f"Successfully verified existing model at {model_path}")
-            return model_path
-        except Exception as e:
-            logger.warning(f"Existing model at {model_path} is invalid, recreating: {str(e)}")
-            # Continue to create a new model
+        return model_path
     
     logger.info(f"Creating placeholder model: {name}")
     
-    # Create a very simple model
+    # Create a simple model
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=input_shape),
-        tf.keras.layers.Conv2D(8, (3, 3), activation='relu', padding='same'),
+        tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
         tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(8, activation='relu'),
@@ -60,6 +50,7 @@ def create_placeholder_model(name, input_shape, model_dir="app/services/models")
     )
     
     # Initialize with weights that predict low confidence
+    # This ensures the model doesn't falsely flag content
     for layer in model.layers:
         if isinstance(layer, tf.keras.layers.Dense) and layer.units == 1:
             weights = layer.get_weights()
@@ -67,55 +58,42 @@ def create_placeholder_model(name, input_shape, model_dir="app/services/models")
             weights[1] = np.array([-5.0])
             layer.set_weights(weights)
     
-    # Test the model with dummy input
-    dummy_input = np.zeros((1,) + input_shape)
-    prediction = model.predict(dummy_input)
-    logger.info(f"Test prediction for {name}: {prediction[0][0]}")
-    
     # Save the model
+    model.save(model_path)
+    logger.info(f"Successfully created and saved {name} at {model_path}")
+    
+    # Verify the model works
     try:
-        model.save(model_path)
-        logger.info(f"Successfully created and saved {name} at {model_path}")
+        test_input = np.zeros((1,) + input_shape)
+        prediction = model.predict(test_input)
+        logger.info(f"Test prediction: {prediction[0][0]}")
+        
+        # Load the model to verify it was saved correctly
+        loaded_model = tf.keras.models.load_model(model_path)
+        loaded_prediction = loaded_model.predict(test_input)
+        logger.info(f"Loaded model test prediction: {loaded_prediction[0][0]}")
+        
         return model_path
     except Exception as e:
-        logger.error(f"Error saving model: {str(e)}")
-        # Try saving in SavedModel format instead
-        try:
-            saved_model_dir = os.path.join(model_dir, f"{name}_saved_model")
-            tf.saved_model.save(model, saved_model_dir)
-            logger.info(f"Saved model in SavedModel format at {saved_model_dir}")
-            return saved_model_dir
-        except Exception as e2:
-            logger.error(f"Error saving in SavedModel format: {str(e2)}")
-            return None
+        logger.error(f"Error testing model: {str(e)}")
+        return None
 
-def setup_models():
+def create_models():
     """Create both placeholder models"""
-    models_created = []
-    
-    # Create deepfake detection model
     deepfake_path = create_placeholder_model(
         "deepfake_model", 
-        (224, 224, 3)  # Standard input shape for many image models
+        (224, 224, 3)
     )
-    if deepfake_path:
-        models_created.append(("deepfake_model", deepfake_path))
     
-    # Create NSFW detection model
     nsfw_path = create_placeholder_model(
         "nsfw_model", 
-        (224, 224, 3)  # Standard input shape for many image models
+        (224, 224, 3)
     )
-    if nsfw_path:
-        models_created.append(("nsfw_model", nsfw_path))
     
-    return models_created
+    return deepfake_path is not None and nsfw_path is not None
 
 if __name__ == "__main__":
-    models = setup_models()
-    if models:
-        logger.info(f"Successfully created {len(models)} models:")
-        for name, path in models:
-            logger.info(f"  - {name}: {path}")
+    if create_models():
+        logger.info("Successfully created placeholder models")
     else:
         logger.error("Failed to create placeholder models")
