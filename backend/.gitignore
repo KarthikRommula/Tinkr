@@ -1,25 +1,63 @@
-/venv
-/__pycache__/
-/.pytest_cache/
-/.mypy_cache/
-/.pytest_cache/
-/uploads
-/uploads/*
-temp_uploads
-temp_uploads/*
-models
-models/*
-/temp_uploads
-/test_images
-/test_images/*
-/test_images/*
-*.log
-logs/
-temp_uploads/*
-uploads/*
-test_images/*
+# Python virtual environments
+/venv/
+/.env/
+/.venv/
+/env/
+
+# Python cache files
 __pycache__/
 */__pycache__/
 **/__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing caches
+/.pytest_cache/
+/.mypy_cache/
+/.coverage
+/htmlcov/
+
+# Logs and temporary files
+*.log
+/logs/
+/safegram*.log
+
+# Upload and temporary directories
+/uploads/
+/temp_uploads/
+/downloads/
+
+# Test files and data
+/test_images/
+/test_reports/
+
+# Model files and training data
+/app/services/models/
+*.h5
+*.pb
+*.onnx
+*.tflite
+*.pt
+
+# Training data and checkpoints
+/training_data/
+/checkpoints/
+
+# Environment and IDE files
+.env
+.idea/
+.vscode/
+*.swp
+*.swo
 .DS_Store
-__pycache__
+
+# Distribution / packaging
+/dist/
+/build/
+/*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development settings
+/local_settings.py

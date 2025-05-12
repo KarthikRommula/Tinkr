@@ -1,16 +1,17 @@
-from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, status, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Depends, HTTPException, status, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import jwt
 from passlib.context import CryptContext
 import os
 import shutil
 from uuid import uuid4
 import logging
+import time
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, HTTPException, status
 
@@ -50,6 +51,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# CORS middleware is sufficient for basic functionality
+
 # Security setup
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key")  # Change this in production!
 ALGORITHM = "HS256"
@@ -84,6 +87,16 @@ class UserInDB(User):
 
 class UserCreate(User):
     password: str
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "username": "johndoe",
+                "email": "john.doe@example.com",
+                "full_name": "John Doe",
+                "password": "StrongP@ss123"
+            }
+        }
 
 class Token(BaseModel):
     access_token: str
@@ -236,16 +249,26 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @app.post("/users/", response_model=User)
 async def create_user(user: UserCreate):
+    # Simple validation
+    if len(user.username) < 3 or len(user.username) > 30:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username must be between 3 and 30 characters"
+        )
+    
     if user.username in fake_users_db:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists"
+            detail="Username already registered"
         )
+    
     hashed_password = get_password_hash(user.password)
     user_dict = user.dict()
     user_dict.pop("password")
     user_dict["hashed_password"] = hashed_password
     fake_users_db[user.username] = user_dict
+    
+    logger.info(f"User created: {user.username}")
     return user_dict
 
 @app.get("/users/me", response_model=User)
@@ -359,6 +382,30 @@ async def get_feed(current_user: User = Depends(get_current_active_user)):
 @app.get("/")
 async def root():
     return {"message": "Welcome to SafeGram API"}
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Simple request logging"""
+    start_time = time.time()
+    
+    # Log request details
+    logger.info(f"Request: {request.method} {request.url.path}")
+    
+    # Process the request
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        
+        # Log response details
+        logger.info(f"Response: {response.status_code} in {process_time:.3f}s")
+        
+        return response
+    except Exception as e:
+        # Log exceptions
+        logger.error(f"Error processing request: {str(e)}")
+        raise
+
+# Admin endpoints removed to simplify the application
 
 if __name__ == "__main__":
     import uvicorn

@@ -4,11 +4,12 @@ import time
 import numpy as np
 import logging
 import tensorflow as tf
-from tensorflow.keras.applications import EfficientNetB0
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-from tensorflow.keras.models import Model
-from tensorflow.keras.preprocessing.image import img_to_array
-from tensorflow.keras.applications.efficientnet import preprocess_input
+import keras
+from keras.applications import EfficientNetB0
+from keras.layers import Dense, GlobalAveragePooling2D
+from keras.models import Model
+from keras.utils import img_to_array
+from keras.applications.efficientnet import preprocess_input
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -77,7 +78,7 @@ class ImprovedDeepfakeDetector:
             # First check if model exists
             if os.path.exists(self.model_path):
                 try:
-                    self.model = tf.keras.models.load_model(self.model_path)
+                    self.model = keras.models.load_model(self.model_path)
                     logger.info(f"Loaded deepfake detection model from {self.model_path}")
                     
                     # Test the model with a dummy input
@@ -128,7 +129,7 @@ class ImprovedDeepfakeDetector:
             
             # Initialize with slightly biased weights to be conservative (assume real unless confident)
             for layer in model.layers:
-                if isinstance(layer, tf.keras.layers.Dense) and layer.units == 1:
+                if isinstance(layer, keras.layers.Dense) and layer.units == 1:
                     weights = layer.get_weights()
                     # Set bias to a slightly negative value to be conservative
                     weights[1] = np.array([-1.0])
@@ -149,15 +150,15 @@ class ImprovedDeepfakeDetector:
         """Create and load a simple placeholder model as fallback"""
         try:
             # Create a simple model
-            model = tf.keras.Sequential([
-                tf.keras.layers.Input(shape=(224, 224, 3)),
-                tf.keras.layers.Conv2D(16, (3, 3), activation='relu'),
-                tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
-                tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
-                tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
-                tf.keras.layers.Flatten(),
-                tf.keras.layers.Dense(64, activation='relu'),
-                tf.keras.layers.Dense(1, activation='sigmoid')
+            model = keras.Sequential([
+                keras.layers.Input(shape=(224, 224, 3)),
+                keras.layers.Conv2D(16, (3, 3), activation='relu'),
+                keras.layers.MaxPooling2D(pool_size=(2, 2)),
+                keras.layers.Conv2D(32, (3, 3), activation='relu'),
+                keras.layers.MaxPooling2D(pool_size=(2, 2)),
+                keras.layers.Flatten(),
+                keras.layers.Dense(64, activation='relu'),
+                keras.layers.Dense(1, activation='sigmoid')
             ])
             
             # Compile the model
@@ -169,7 +170,7 @@ class ImprovedDeepfakeDetector:
             
             # Initialize with weights that predict low confidence
             for layer in model.layers:
-                if isinstance(layer, tf.keras.layers.Dense) and layer.units == 1:
+                if isinstance(layer, keras.layers.Dense) and layer.units == 1:
                     weights = layer.get_weights()
                     # Set bias to a negative value to produce low confidence scores
                     weights[1] = np.array([-3.0])
