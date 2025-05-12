@@ -1,20 +1,23 @@
 # SafeGram Backend
 
-SafeGram is a secure image sharing platform with advanced AI-powered content moderation to detect and filter deepfake and NSFW content.
+SafeGram is a secure image sharing platform with advanced AI-powered content moderation to detect and filter deepfake and NSFW content. The platform uses state-of-the-art deep learning models to ensure all shared content is authentic and appropriate.
 
 ## Features
 
 ### AI Models
-- **Improved Deepfake Detection**: Using transfer learning with EfficientNetB0
-- **Improved NSFW Detection**: Using transfer learning with MobileNetV2
-- **Model Training**: Support for training models on custom datasets
-- **Comprehensive Testing**: Enhanced test suite with visualization and reporting
+- **Improved Deepfake Detection**: Using transfer learning with EfficientNetB0 to identify manipulated facial images with high accuracy
+- **Improved NSFW Detection**: Using transfer learning with MobileNetV2 for efficient and accurate inappropriate content filtering
+- **Custom Model Training**: Support for training models on your own datasets with flexible configuration options
+- **Comprehensive Testing**: Enhanced test suite with visualization, reporting, and performance metrics
 
-### Security Enhancements
-- **Rate Limiting**: Prevents brute force attacks and API abuse
-- **Security Headers**: Protects against common web vulnerabilities
-- **Input Validation**: Prevents injection attacks and validates user input
-- **Logging**: Comprehensive request and error logging
+### Performance
+- **Fast Processing**: Optimized inference for quick content moderation (typically <3s per image)
+- **Confidence Scoring**: Detailed confidence metrics for both deepfake and NSFW detection
+- **Threshold Tuning**: Configurable sensitivity thresholds to balance safety and usability
+
+### Additional Features
+- **Comprehensive Logging**: Detailed request and error logging for monitoring and debugging
+- **Error Handling**: Robust error handling with informative messages
 
 ## Getting Started
 
@@ -86,9 +89,33 @@ python train_models.py --download-samples
 Options:
 - `--deepfake`: Train only the deepfake detection model
 - `--nsfw`: Train only the NSFW detection model
-- `--epochs`: Number of epochs to train for
-- `--batch-size`: Batch size for training
+- `--epochs`: Number of epochs to train for (default: 20)
+- `--batch-size`: Batch size for training (default: 32)
 - `--download-samples`: Download sample training data
+
+### Custom Dataset Structure
+
+To train with your own images, organize them in the following directory structure:
+
+```
+training_data/
+├── deepfake/
+│   ├── train/
+│   │   ├── real/     <- Real face images (100-500+ recommended)
+│   │   └── fake/     <- Deepfake images (100-500+ recommended)
+│   └── val/
+│       ├── real/     <- Validation real images (20-30% of dataset)
+│       └── fake/     <- Validation fake images (20-30% of dataset)
+├── nsfw/
+    ├── train/
+    │   ├── safe/     <- Safe content images (100-500+ recommended)
+    │   └── nsfw/     <- NSFW content images (100-500+ recommended)
+    └── val/
+        ├── safe/     <- Validation safe images (20-30% of dataset)
+        └── nsfw/     <- Validation NSFW images (20-30% of dataset)
+```
+
+The training script will automatically resize images to 224x224 pixels and apply data augmentation to improve model robustness.
 
 ## Enhanced Testing
 
@@ -115,38 +142,60 @@ Options:
 - `POST /upload/`: Upload an image (with AI safety checks)
 - `GET /feed/`: Get image feed
 
-### Admin
-- `GET /admin/rate-limit-status/{client_ip}`: Check rate limit status
-- `POST /admin/reset-rate-limit/{client_ip}`: Reset rate limit for a client
+## API Response Codes
 
-## Security Features
+- `200 OK`: Request successful
+- `400 Bad Request`: Invalid input or rejected content
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: Resource not found
+- `500 Internal Server Error`: Server-side error
 
-### Rate Limiting
-The application uses a token bucket algorithm for flexible rate limiting:
-- Default: 60 requests per minute
-- Burst limit: 10 requests
-- IP ban threshold: 100 violations
-- Ban duration: 30 minutes
+## Frontend
 
-### Input Validation
-- Username validation: 3-30 alphanumeric characters and underscores
-- Email validation: Standard email format
-- Password strength: At least 8 characters with uppercase, lowercase, number, and special character
-- Protection against XSS, SQL injection, and command injection
+SafeGram includes a React-based frontend with the following features:
 
-### Security Headers
-- X-Content-Type-Options: nosniff
-- X-Frame-Options: DENY
-- X-XSS-Protection: 1; mode=block
-- Strict-Transport-Security: max-age=31536000; includeSubDomains
-- Content-Security-Policy: Restrictive policy to prevent XSS
-- Referrer-Policy: strict-origin-when-cross-origin
-- Permissions-Policy: Restricts browser features
+### Authentication
+- User registration and login
+- JWT-based authentication
+- Protected routes for authenticated users
+
+### User Interface
+- Modern, responsive design using Tailwind CSS
+- Image upload with real-time feedback
+- Feed view for browsing uploaded images
+- Detailed error messages for rejected content
+
+### Development
+
+To run the frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will be available at http://localhost:5174 (or another port if 5174 is in use).
+
+### Directory Structure
+
+The frontend follows a standard React project structure with special attention to the authentication context:
+
+```
+frontend/
+├── src/
+│   ├── components/    <- Reusable UI components
+│   ├── context/       <- Authentication context
+│   ├── pages/         <- Page components
+│   └── App.jsx        <- Main application component
+```
 
 ## Future Improvements
 
 1. **Model Training**: Train models on high-quality datasets for better performance
-2. **UI Improvements**: Optimize the frontend for mobile responsiveness
+2. **UI Improvements**: Enhance the frontend with additional features and animations
 3. **Performance Optimization**: Implement caching and batch processing for AI screening
 4. **Security Hardening**: Add more advanced security measures
 5. **Distributed Processing**: Scale the application for higher throughput
+6. **Mobile App**: Develop native mobile applications
