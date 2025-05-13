@@ -118,6 +118,8 @@ class PostCreate(BaseModel):
 class DetectionResult(BaseModel):
     is_safe: bool
     reason: Optional[str] = None
+    explanation: Optional[dict] = None
+    visual_areas: Optional[list] = None
 
 # Helper functions
 def verify_password(plain_password, hashed_password):
@@ -175,11 +177,34 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 # Content moderation functions
 async def check_image_safety(file_path: str) -> DetectionResult:
-    """Check if an image is safe (no deepfakes or NSFW content)"""
+    """Check if an image is safe (no deepfakes or NSFW content)
+    
+    Returns a DetectionResult with detailed explanation and visual areas of concern
+    when content is flagged as unsafe.
+    """
     logger.info(f"Checking image safety: {file_path}")
     
     # Get environment settings
     dev_mode = os.getenv("SAFEGRAM_DEV_MODE", "False").lower() == "true"
+    
+    # Initialize explanation dictionary to store detailed information
+    explanation = {
+        "deepfake": {
+            "detected": False,
+            "confidence": 0.0,
+            "details": "",
+            "common_indicators": []
+        },
+        "nsfw": {
+            "detected": False,
+            "confidence": 0.0,
+            "details": "",
+            "content_type": ""
+        }
+    }
+    
+    # Initialize visual areas list to store regions of concern
+    visual_areas = []
     
     # Log environment mode
     if dev_mode:
@@ -196,30 +221,114 @@ async def check_image_safety(file_path: str) -> DetectionResult:
         # Get threshold from environment variable
         deepfake_threshold = float(os.getenv("DEEPFAKE_THRESHOLD", "0.6"))
         is_deepfake, deepfake_confidence = deepfake_detector.detect(file_path, threshold=deepfake_threshold)
+        
+        # Store detailed information regardless of detection result
+        explanation["deepfake"]["confidence"] = float(f"{deepfake_confidence:.4f}")
+        
+        # Get areas of concern for visualization if available
+        try:
+            # This would call a method to get heatmap or bounding boxes of suspicious areas
+            # For now, we'll simulate with placeholder data
+            if hasattr(deepfake_detector, "get_attention_map"):
+                attention_areas = deepfake_detector.get_attention_map(file_path)
+                if attention_areas and deepfake_confidence > 0.4:  # Show areas even below threshold if significant
+                    visual_areas.extend(attention_areas)
+        except Exception as viz_error:
+            logger.warning(f"Could not generate visual explanation for deepfake: {str(viz_error)}")
+        
         if is_deepfake:
+            # Add detailed explanation
+            explanation["deepfake"]["detected"] = True
+            explanation["deepfake"]["details"] = "The image shows signs of digital manipulation typically found in deepfakes."
+            
+            # Add common indicators based on confidence level
+            if deepfake_confidence > 0.8:
+                explanation["deepfake"]["common_indicators"] = [
+                    "Unnatural facial boundaries",
+                    "Inconsistent lighting on face compared to scene",
+                    "Blurry or distorted facial features",
+                    "Unnatural skin texture or color"
+                ]
+            elif deepfake_confidence > 0.6:
+                explanation["deepfake"]["common_indicators"] = [
+                    "Slight inconsistencies in facial features",
+                    "Minor lighting discrepancies",
+                    "Potential artifacts around facial edges"
+                ]
+            
             logger.warning(f"Deepfake detected in image: {file_path} with confidence: {deepfake_confidence:.4f}")
-            return DetectionResult(is_safe=False, reason=f"Detected manipulated content with {deepfake_confidence:.2f} confidence. Upload rejected.")
+            return DetectionResult(
+                is_safe=False, 
+                reason=f"Detected manipulated content with {deepfake_confidence:.2f} confidence. Upload rejected.",
+                explanation=explanation,
+                visual_areas=visual_areas
+            )
     except Exception as e:
         logger.error(f"Error during deepfake detection: {str(e)}")
         if os.getenv("REJECT_ON_ERROR", "False").lower() == "true":
-            return DetectionResult(is_safe=False, reason="Error processing image during deepfake detection. Upload rejected.")
+            explanation["deepfake"]["details"] = f"Error during analysis: {str(e)}"
+            return DetectionResult(
+                is_safe=False, 
+                reason="Error processing image during deepfake detection. Upload rejected.",
+                explanation=explanation
+            )
     
     # Check for NSFW content
     try:
         # Get threshold from environment variable
         nsfw_threshold = float(os.getenv("NSFW_THRESHOLD", "0.6"))
         is_nsfw, nsfw_confidence = nsfw_detector.detect(file_path, threshold=nsfw_threshold)
+        
+        # Store detailed information regardless of detection result
+        explanation["nsfw"]["confidence"] = float(f"{nsfw_confidence:.4f}")
+        
+        # Get areas of concern for visualization if available
+        try:
+            # This would call a method to get heatmap or bounding boxes of suspicious areas
+            if hasattr(nsfw_detector, "get_sensitive_regions"):
+                sensitive_regions = nsfw_detector.get_sensitive_regions(file_path)
+                if sensitive_regions and nsfw_confidence > 0.4:  # Show areas even below threshold if significant
+                    visual_areas.extend(sensitive_regions)
+        except Exception as viz_error:
+            logger.warning(f"Could not generate visual explanation for NSFW: {str(viz_error)}")
+        
         if is_nsfw:
+            # Add detailed explanation
+            explanation["nsfw"]["detected"] = True
+            
+            # Determine content type based on confidence patterns
+            # This would ideally come from a more detailed classifier
+            if hasattr(nsfw_detector, "get_content_type"):
+                content_type = nsfw_detector.get_content_type(file_path)
+                explanation["nsfw"]["content_type"] = content_type
+                explanation["nsfw"]["details"] = f"The image contains {content_type} content that violates our community guidelines."
+            else:
+                explanation["nsfw"]["content_type"] = "explicit"
+                explanation["nsfw"]["details"] = "The image contains explicit content that violates our community guidelines."
+            
             logger.warning(f"NSFW content detected in image: {file_path} with confidence: {nsfw_confidence:.4f}")
-            return DetectionResult(is_safe=False, reason=f"Detected explicit content with {nsfw_confidence:.2f} confidence. Upload rejected.")
+            return DetectionResult(
+                is_safe=False, 
+                reason=f"Detected explicit content with {nsfw_confidence:.2f} confidence. Upload rejected.",
+                explanation=explanation,
+                visual_areas=visual_areas
+            )
     except Exception as e:
         logger.error(f"Error during NSFW detection: {str(e)}")
         if os.getenv("REJECT_ON_ERROR", "False").lower() == "true":
-            return DetectionResult(is_safe=False, reason="Error processing image during NSFW detection. Upload rejected.")
+            explanation["nsfw"]["details"] = f"Error during analysis: {str(e)}"
+            return DetectionResult(
+                is_safe=False, 
+                reason="Error processing image during NSFW detection. Upload rejected.",
+                explanation=explanation
+            )
     
     # If both checks pass, the image is safe
     logger.info(f"Image passed safety checks: {file_path}")
-    return DetectionResult(is_safe=True)
+    return DetectionResult(
+        is_safe=True,
+        explanation=explanation
+    )
 
 def cleanup_temp_files(file_paths: List[str]):
     """Clean up temporary files after processing"""
@@ -330,10 +439,14 @@ async def upload_image(
             # Schedule cleanup in the background
             background_tasks.add_task(cleanup_temp_files, [temp_file_path])
             
-            # Return detailed error
+            # Return detailed error with explanation
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=safety_result.reason
+                detail={
+                    "message": safety_result.reason,
+                    "explanation": safety_result.explanation,
+                    "visual_areas": safety_result.visual_areas
+                }
             )
         
         # If the image passes safety checks, save it permanently

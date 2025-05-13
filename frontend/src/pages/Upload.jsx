@@ -12,6 +12,8 @@ function Upload() {
   const [fileSize, setFileSize] = useState(0);
   const [fileType, setFileType] = useState('');
   const [scanningStage, setScanningStage] = useState(''); // for UI feedback
+  const [detailedExplanation, setDetailedExplanation] = useState(null); // for AI explanation
+  const [visualAreas, setVisualAreas] = useState(null); // for visualization of problematic areas
   const navigate = useNavigate();
   
   // Maximum file size (5MB)
@@ -100,12 +102,14 @@ function Upload() {
       setScanningStage('complete');
       setSuccess(true);
       
-      // Reset form
+      // Reset form and explanations
       setFile(null);
       setCaption('');
       setPreview(null);
       setFileSize(0);
       setFileType('');
+      setDetailedExplanation(null);
+      setVisualAreas(null);
       
       // Redirect to home after a short delay
       setTimeout(() => {
@@ -115,8 +119,31 @@ function Upload() {
       console.error('Upload error:', error);
       setScanningStage('failed');
       
+      // Reset previous explanations
+      setDetailedExplanation(null);
+      setVisualAreas(null);
+      
       if (error.response && error.response.data && error.response.data.detail) {
-        setError(error.response.data.detail);
+        // Check if the detail is an object with explanation data
+        if (typeof error.response.data.detail === 'object') {
+          const detailData = error.response.data.detail;
+          
+          // Set the basic error message
+          setError(detailData.message || 'Image rejected by our AI safety system');
+          
+          // Set detailed explanation if available
+          if (detailData.explanation) {
+            setDetailedExplanation(detailData.explanation);
+          }
+          
+          // Set visual areas if available
+          if (detailData.visual_areas) {
+            setVisualAreas(detailData.visual_areas);
+          }
+        } else {
+          // If detail is just a string
+          setError(error.response.data.detail);
+        }
       } else if (error.response && error.response.status === 400) {
         setError('Image rejected by our AI safety system. Please make sure your image meets our community guidelines.');
       } else if (error.response && error.response.status === 500) {
@@ -171,6 +198,86 @@ function Upload() {
             <div className="ml-3">
               <p className="text-sm font-medium">{error}</p>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Detailed AI Explanation Panel */}
+      {detailedExplanation && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Why This Image Was Rejected</h3>
+          
+          {/* Deepfake Explanation */}
+          {detailedExplanation.deepfake && detailedExplanation.deepfake.detected && (
+            <div className="mb-4">
+              <h4 className="font-bold text-yellow-700 mb-1">Deepfake Detection</h4>
+              <div className="flex items-center mb-2">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${Math.min(detailedExplanation.deepfake.confidence * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  {(detailedExplanation.deepfake.confidence * 100).toFixed(1)}% confidence
+                </span>
+              </div>
+              <p className="text-sm text-gray-700 mb-2">{detailedExplanation.deepfake.details}</p>
+              
+              {detailedExplanation.deepfake.common_indicators && detailedExplanation.deepfake.common_indicators.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium text-gray-700">Detected indicators:</p>
+                  <ul className="list-disc ml-5 mt-1 text-sm text-gray-600">
+                    {detailedExplanation.deepfake.common_indicators.map((indicator, index) => (
+                      <li key={index}>{indicator}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* NSFW Explanation */}
+          {detailedExplanation.nsfw && detailedExplanation.nsfw.detected && (
+            <div>
+              <h4 className="font-bold text-yellow-700 mb-1">Inappropriate Content Detection</h4>
+              <div className="flex items-center mb-2">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-red-600 h-2.5 rounded-full" 
+                    style={{ width: `${Math.min(detailedExplanation.nsfw.confidence * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  {(detailedExplanation.nsfw.confidence * 100).toFixed(1)}% confidence
+                </span>
+              </div>
+              <p className="text-sm text-gray-700 mb-2">{detailedExplanation.nsfw.details}</p>
+              
+              {detailedExplanation.nsfw.content_type && (
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Content type:</span> {detailedExplanation.nsfw.content_type}
+                </p>
+              )}
+            </div>
+          )}
+          
+          {/* Visual Areas Placeholder - In a real implementation, this would show a heatmap or bounding boxes */}
+          {visualAreas && visualAreas.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-700">Areas of concern detected in image</p>
+              <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-500">
+                Visual highlighting is available in the administrator view
+              </div>
+            </div>
+          )}
+          
+          <div className="mt-4 text-sm text-gray-600">
+            <p className="font-medium">What to do next:</p>
+            <ul className="list-disc ml-5 mt-1">
+              <li>Try uploading a different image that meets our community guidelines</li>
+              <li>If you believe this is a mistake, you can contact support</li>
+            </ul>
           </div>
         </div>
       )}

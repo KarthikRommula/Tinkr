@@ -72,7 +72,7 @@ def setup_training_directories(base_dir="training_data"):
     
     return dirs
 
-def train_deepfake_model(training_dirs, epochs=20, batch_size=32):
+def train_deepfake_model(training_dirs, epochs=50, batch_size=32):
     """
     Train the deepfake detection model using transfer learning
     
@@ -89,58 +89,93 @@ def train_deepfake_model(training_dirs, epochs=20, batch_size=32):
     # Initialize the detector to get the base model
     detector = ImprovedDeepfakeDetector()
     
-    # Create a new model for training
-    base_model = tf.keras.applications.EfficientNetB0(
+    # Create a new model for training - using a more powerful base model
+    base_model = tf.keras.applications.EfficientNetB3(
         weights='imagenet', 
         include_top=False, 
         input_shape=(224, 224, 3)
     )
     
-    # Unfreeze some layers for fine-tuning
-    for layer in base_model.layers[-20:]:
-        layer.trainable = True
+    # First freeze the entire base model for initial training
+    base_model.trainable = False
     
-    # Add custom classification layers
+    # Add custom classification layers with stronger regularization
     x = base_model.output
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dense(512, activation='relu')(x)
+    # Add batch normalization to help with training stability
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.Dense(512, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(x)
+    x = tf.keras.layers.Dropout(0.6)(x)  # Increased dropout for better regularization
+    x = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(x)
     x = tf.keras.layers.Dropout(0.5)(x)
-    x = tf.keras.layers.Dense(128, activation='relu')(x)
-    x = tf.keras.layers.Dropout(0.3)(x)
+    x = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(x)
+    x = tf.keras.layers.Dropout(0.4)(x)
     predictions = tf.keras.layers.Dense(1, activation='sigmoid')(x)
     
     # Create the model
     model = tf.keras.models.Model(inputs=base_model.input, outputs=predictions)
     
-    # Compile the model
+    # Check class balance in training data
+    real_count = len(os.listdir(training_dirs["deepfake"]["train"]["real"]))
+    fake_count = len(os.listdir(training_dirs["deepfake"]["train"]["fake"]))
+    total = real_count + fake_count
+    
+    logger.info(f"Training data distribution: {real_count} real images ({real_count/total:.1%}), "
+               f"{fake_count} fake images ({fake_count/total:.1%})")
+    
+    # Calculate class weights to handle imbalance
+    class_weight = None
+    if abs(real_count - fake_count) > 0.1 * total:  # If imbalance is more than 10%
+        weight_for_0 = (1 / real_count) * total / 2
+        weight_for_1 = (1 / fake_count) * total / 2
+        class_weight = {0: weight_for_0, 1: weight_for_1}
+        logger.info(f"Using class weights due to imbalance: {class_weight}")
+    
+    # Compile the model with a lower initial learning rate
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.00005),
         loss='binary_crossentropy',
-        metrics=['accuracy', tf.keras.metrics.AUC(), tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
+        metrics=['accuracy', 
+                tf.keras.metrics.AUC(), 
+                tf.keras.metrics.Precision(), 
+                tf.keras.metrics.Recall(),
+                tf.keras.metrics.FalsePositives(),
+                tf.keras.metrics.FalseNegatives()]
     )
     
-    # Data augmentation for training
+    # Enhanced data augmentation for training to improve generalization
     train_datagen = ImageDataGenerator(
         rescale=1./255,
-        rotation_range=20,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        shear_range=0.2,
-        zoom_range=0.2,
+        rotation_range=30,
+        width_shift_range=0.3,
+        height_shift_range=0.3,
+        shear_range=0.3,
+        zoom_range=0.3,
         horizontal_flip=True,
-        fill_mode='nearest'
+        vertical_flip=False,  # Faces are usually upright
+        brightness_range=[0.7, 1.3],  # Vary brightness
+        channel_shift_range=30,  # Slight color variations
+        fill_mode='nearest',
+        validation_split=0.1  # Use 10% of training data as additional validation
     )
     
-    # Only rescaling for validation
-    val_datagen = ImageDataGenerator(rescale=1./255)
+    # Add some minimal augmentation for validation to better match real-world conditions
+    val_datagen = ImageDataGenerator(
+        rescale=1./255,
+        width_shift_range=0.1,  # Slight shifts to simulate real-world variations
+        height_shift_range=0.1,
+        brightness_range=[0.9, 1.1]  # Slight brightness variations
+    )
     
-    # Create train generators
+    # Create train generators with shuffle=True to ensure random order
     train_generator = train_datagen.flow_from_directory(
         os.path.join(training_dirs["deepfake"]["train"]["real"], ".."),
         target_size=(224, 224),
         batch_size=batch_size,
         class_mode='binary',
-        classes=["real", "fake"]
+        classes=["real", "fake"],
+        shuffle=True,
+        seed=42  # Set seed for reproducibility
     )
     
     # Create validation generators
@@ -149,14 +184,16 @@ def train_deepfake_model(training_dirs, epochs=20, batch_size=32):
         target_size=(224, 224),
         batch_size=batch_size,
         class_mode='binary',
-        classes=["real", "fake"]
+        classes=["real", "fake"],
+        shuffle=True,
+        seed=42  # Set seed for reproducibility
     )
     
     # Create model directory if it doesn't exist
     model_dir = os.path.dirname(detector.model_path)
     os.makedirs(model_dir, exist_ok=True)
     
-    # Set up callbacks
+    # Set up callbacks with improved parameters
     callbacks = [
         ModelCheckpoint(
             detector.model_path,
@@ -167,45 +204,118 @@ def train_deepfake_model(training_dirs, epochs=20, batch_size=32):
         ),
         EarlyStopping(
             monitor='val_loss',
-            patience=5,
+            patience=10,  # Increased patience to allow more training time
             restore_best_weights=True,
             verbose=1
         ),
         ReduceLROnPlateau(
             monitor='val_loss',
             factor=0.2,
-            patience=3,
-            min_lr=1e-6,
+            patience=5,  # Increased patience before reducing learning rate
+            min_lr=1e-7,
             verbose=1
         ),
         TensorBoard(
             log_dir=os.path.join('logs', 'deepfake', datetime.now().strftime("%Y%m%d-%H%M%S")),
-            histogram_freq=1
+            histogram_freq=1,
+            update_freq='epoch',
+            profile_batch=0  # Disable profiling to reduce memory usage
         )
     ]
     
     # Check if we have enough training data
-    if len(os.listdir(training_dirs["deepfake"]["train"]["real"])) < 10 or \
-       len(os.listdir(training_dirs["deepfake"]["train"]["fake"])) < 10:
+    if real_count < 50 or fake_count < 50:
         logger.warning("Not enough training data for deepfake detection. Using placeholder model.")
         detector._load_placeholder_model()
         model.save(detector.model_path)
         return detector.model_path
     
-    # Train the model
-    history = model.fit(
+    # First phase: Train with frozen base model
+    logger.info("Phase 1: Training with frozen base model...")
+    # Try to use multiprocessing if available, otherwise fall back to standard training
+    try:
+        history_phase1 = model.fit(
+            train_generator,
+            steps_per_epoch=train_generator.samples // batch_size,
+            epochs=min(10, epochs // 3),  # Train for 1/3 of total epochs or 10, whichever is smaller
+            validation_data=val_generator,
+            validation_steps=val_generator.samples // batch_size,
+            callbacks=callbacks,
+            verbose=1,
+            class_weight=class_weight
+            # Removed multiprocessing parameters that caused errors
+        )
+    except Exception as e:
+        logger.error(f"Error in phase 1 training: {str(e)}")
+        raise
+    
+    # Second phase: Fine-tune the top layers of the base model
+    logger.info("Phase 2: Fine-tuning top layers of base model...")
+    # Unfreeze the top layers of the base model
+    for layer in base_model.layers[-30:]:  # Unfreeze more layers for better fine-tuning
+        layer.trainable = True
+    
+    # Recompile the model with a lower learning rate for fine-tuning
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001),  # Lower learning rate for fine-tuning
+        loss='binary_crossentropy',
+        metrics=['accuracy', 
+                tf.keras.metrics.AUC(), 
+                tf.keras.metrics.Precision(), 
+                tf.keras.metrics.Recall(),
+                tf.keras.metrics.FalsePositives(),
+                tf.keras.metrics.FalseNegatives()]
+    )
+    
+    # Continue training with fine-tuning
+    history_phase2 = model.fit(
         train_generator,
         steps_per_epoch=train_generator.samples // batch_size,
         epochs=epochs,
+        initial_epoch=min(10, epochs // 3),  # Continue from where phase 1 left off
         validation_data=val_generator,
         validation_steps=val_generator.samples // batch_size,
         callbacks=callbacks,
-        verbose=1
+        verbose=1,
+        class_weight=class_weight
+        # Removed multiprocessing parameters that caused errors
     )
     
     # Save the final model
     model.save(detector.model_path)
     logger.info(f"Deepfake model trained and saved to {detector.model_path}")
+    
+    # Plot training history if matplotlib is available
+    try:
+        import matplotlib.pyplot as plt
+        
+        # Combine histories from both phases
+        acc = history_phase1.history['accuracy'] + history_phase2.history['accuracy']
+        val_acc = history_phase1.history['val_accuracy'] + history_phase2.history['val_accuracy']
+        loss = history_phase1.history['loss'] + history_phase2.history['loss']
+        val_loss = history_phase1.history['val_loss'] + history_phase2.history['val_loss']
+        
+        epochs_range = range(len(acc))
+        
+        plt.figure(figsize=(12, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs_range, acc, label='Training Accuracy')
+        plt.plot(epochs_range, val_acc, label='Validation Accuracy')
+        plt.legend(loc='lower right')
+        plt.title('Training and Validation Accuracy')
+        
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs_range, loss, label='Training Loss')
+        plt.plot(epochs_range, val_loss, label='Validation Loss')
+        plt.legend(loc='upper right')
+        plt.title('Training and Validation Loss')
+        
+        # Save the plot
+        plot_path = os.path.join(model_dir, 'training_history.png')
+        plt.savefig(plot_path)
+        logger.info(f"Training history plot saved to {plot_path}")
+    except ImportError:
+        logger.warning("Matplotlib not available. Skipping training history plot.")
     
     return detector.model_path
 
@@ -431,6 +541,70 @@ def download_sample_training_data(training_dirs):
     
     logger.info("Sample training data created successfully")
 
+def validate_dataset(training_dirs):
+    """Validate the dataset structure and balance"""
+    logger.info("Validating dataset...")
+    
+    # Check for deepfake dataset
+    real_train = os.path.join(training_dirs["deepfake"]["train"]["real"])
+    fake_train = os.path.join(training_dirs["deepfake"]["train"]["fake"])
+    real_val = os.path.join(training_dirs["deepfake"]["val"]["real"])
+    fake_val = os.path.join(training_dirs["deepfake"]["val"]["fake"])
+    
+    # Count images in each directory
+    real_train_count = len([f for f in os.listdir(real_train) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+    fake_train_count = len([f for f in os.listdir(fake_train) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+    real_val_count = len([f for f in os.listdir(real_val) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+    fake_val_count = len([f for f in os.listdir(fake_val) if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+    
+    logger.info(f"Deepfake dataset statistics:")
+    logger.info(f"  Training: {real_train_count} real, {fake_train_count} fake")
+    logger.info(f"  Validation: {real_val_count} real, {fake_val_count} fake")
+    
+    # Check for potential issues
+    issues = []
+    
+    # Check for empty directories
+    if real_train_count == 0:
+        issues.append(f"No real images found in training directory: {real_train}")
+    if fake_train_count == 0:
+        issues.append(f"No fake images found in training directory: {fake_train}")
+    if real_val_count == 0:
+        issues.append(f"No real images found in validation directory: {real_val}")
+    if fake_val_count == 0:
+        issues.append(f"No fake images found in validation directory: {fake_val}")
+    
+    # Check for class imbalance
+    if real_train_count > 0 and fake_train_count > 0:
+        train_ratio = max(real_train_count, fake_train_count) / min(real_train_count, fake_train_count)
+        if train_ratio > 3:
+            issues.append(f"Severe class imbalance in training data: ratio {train_ratio:.1f}:1")
+        elif train_ratio > 1.5:
+            issues.append(f"Moderate class imbalance in training data: ratio {train_ratio:.1f}:1")
+    
+    if real_val_count > 0 and fake_val_count > 0:
+        val_ratio = max(real_val_count, fake_val_count) / min(real_val_count, fake_val_count)
+        if val_ratio > 3:
+            issues.append(f"Severe class imbalance in validation data: ratio {val_ratio:.1f}:1")
+        elif val_ratio > 1.5:
+            issues.append(f"Moderate class imbalance in validation data: ratio {val_ratio:.1f}:1")
+    
+    # Check for sufficient data
+    if real_train_count + fake_train_count < 200:
+        issues.append(f"Limited training data: only {real_train_count + fake_train_count} images")
+    if real_val_count + fake_val_count < 50:
+        issues.append(f"Limited validation data: only {real_val_count + fake_val_count} images")
+    
+    # Report issues
+    if issues:
+        logger.warning("Dataset validation found the following issues:")
+        for issue in issues:
+            logger.warning(f"  - {issue}")
+    else:
+        logger.info("Dataset validation completed: No issues found.")
+    
+    return issues
+
 def main():
     """Train the improved AI models"""
     print("=" * 80)
@@ -446,10 +620,15 @@ def main():
     parser = argparse.ArgumentParser(description='Train improved AI models')
     parser.add_argument('--deepfake', action='store_true', help='Train deepfake detection only')
     parser.add_argument('--nsfw', action='store_true', help='Train NSFW detection only')
-    parser.add_argument('--epochs', type=int, default=20, help='Number of epochs to train for')
+    parser.add_argument('--epochs', type=int, default=50, help='Number of epochs to train for')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size for training')
     parser.add_argument('--data-dir', type=str, default='training_data', help='Directory for training data')
     parser.add_argument('--download-samples', action='store_true', help='Download sample training data')
+    parser.add_argument('--validate-only', action='store_true', help='Only validate the dataset without training')
+    parser.add_argument('--learning-rate', type=float, default=0.00005, help='Initial learning rate')
+    parser.add_argument('--model-type', type=str, default='efficientnetb3', 
+                      choices=['efficientnetb0', 'efficientnetb3', 'resnet50', 'xception'], 
+                      help='Base model architecture')
     args = parser.parse_args()
     
     # Set up training directories
@@ -459,14 +638,71 @@ def main():
     if args.download_samples:
         download_sample_training_data(training_dirs)
     
+    # Validate the dataset
+    issues = validate_dataset(training_dirs)
+    
+    # If validate-only flag is set, exit after validation
+    if args.validate_only:
+        if issues:
+            logger.warning("Dataset validation found issues. Please fix them before training.")
+            return 1
+        logger.info("Dataset validation completed successfully.")
+        return 0
+    
+    # If there are critical issues, ask for confirmation before proceeding
+    if any("No " in issue for issue in issues):
+        logger.error("Critical dataset issues found. Training may fail or produce poor results.")
+        response = input("Do you want to proceed with training anyway? (y/n): ")
+        if response.lower() != 'y':
+            logger.info("Training aborted by user.")
+            return 1
+    
+    # Set TensorFlow memory growth to avoid OOM errors
+    try:
+        physical_devices = tf.config.list_physical_devices('GPU')
+        if physical_devices:
+            for device in physical_devices:
+                tf.config.experimental.set_memory_growth(device, True)
+            logger.info(f"GPU memory growth enabled for {len(physical_devices)} GPU(s)")
+    except Exception as e:
+        logger.warning(f"Could not configure GPU memory growth: {str(e)}")
+    
     # Train deepfake detection model
     if not args.nsfw or args.deepfake:
+        logger.info("Starting deepfake model training...")
         deepfake_model_path = train_deepfake_model(
             training_dirs, 
             epochs=args.epochs, 
             batch_size=args.batch_size
         )
         logger.info(f"Deepfake model trained and saved to: {deepfake_model_path}")
+        
+        # Test the model on some sample images
+        logger.info("Testing the trained deepfake model...")
+        detector = ImprovedDeepfakeDetector(model_path=deepfake_model_path)
+        
+        # Test on training samples
+        test_images = []
+        for category, subdir in [("real", "real"), ("fake", "fake")]:
+            dir_path = training_dirs["deepfake"]["val"][subdir]
+            files = [f for f in os.listdir(dir_path) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            if files:
+                # Take up to 3 random samples from each category
+                import random
+                samples = random.sample(files, min(3, len(files)))
+                for sample in samples:
+                    test_images.append((os.path.join(dir_path, sample), category))
+        
+        # Run tests and report results
+        if test_images:
+            logger.info(f"Testing model on {len(test_images)} sample images...")
+            for img_path, true_category in test_images:
+                is_deepfake, confidence = detector.detect(img_path)
+                result = "CORRECT" if (is_deepfake and true_category == "fake") or (not is_deepfake and true_category == "real") else "INCORRECT"
+                logger.info(f"Test image: {os.path.basename(img_path)}")
+                logger.info(f"  True category: {true_category}")
+                logger.info(f"  Prediction: {'fake' if is_deepfake else 'real'} with {confidence:.4f} confidence")
+                logger.info(f"  Result: {result}")
     
     # Train NSFW detection model
     if not args.deepfake or args.nsfw:
