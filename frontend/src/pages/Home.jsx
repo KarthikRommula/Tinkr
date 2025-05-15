@@ -185,22 +185,6 @@ function Home() {
                 </div>
               ))}
             </div>
-
-            {/* Footer links */}
-            <div className="mt-6 text-xs text-gray-500">
-              <div className="flex flex-wrap gap-2 mb-4">
-                <a href="#" className="hover:underline">About</a>
-                <span>•</span>
-                <a href="#" className="hover:underline">Help</a>
-                <span>•</span>
-                <a href="#" className="hover:underline">Privacy</a>
-                <span>•</span>
-                <a href="#" className="hover:underline">Terms</a>
-                <span>•</span>
-                <a href="#" className="hover:underline">Locations</a>
-              </div>
-              <p>&copy; 2025 SafeGram</p>
-            </div>
           </div>
         </div>
       </div>

@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function Upload() {
-  const [file, setFile] = useState(null);
-  const [caption, setCaption] = useState('');
-  const [preview, setPreview] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [captions, setCaptions] = useState({});
+  const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [fileSize, setFileSize] = useState(0);
-  const [fileType, setFileType] = useState('');
+  const [filesInfo, setFilesInfo] = useState([]);
   const [scanningStage, setScanningStage] = useState(''); // for UI feedback
   const [detailedExplanation, setDetailedExplanation] = useState(null); // for AI explanation
   const [visualAreas, setVisualAreas] = useState(null); // for visualization of problematic areas
+  const [dragActive, setDragActive] = useState(false); // for drag and drop interface
+  const [uploadProgress, setUploadProgress] = useState(0); // for upload progress tracking
+  const [rejectedImages, setRejectedImages] = useState([]); // for tracking rejected images
+  const [showFilters, setShowFilters] = useState(false); // for showing/hiding filters
+  const fileInputRef = useRef(null);
   const navigate = useNavigate();
   
   // Maximum file size (5MB)
@@ -21,47 +25,187 @@ function Upload() {
   // Allowed file types
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
   
+  // Helper function to process error responses
+  const processErrorResponse = (error) => {
+    if (error.response && error.response.data && error.response.data.detail) {
+      // Check if the detail is an object with explanation data
+      if (typeof error.response.data.detail === 'object') {
+        const detailData = error.response.data.detail;
+        
+        // Set the basic error message
+        setError(detailData.message || 'Image rejected - See detailed explanation below');
+        
+        // Create a detailed explanation object
+        const explanation = {};
+        
+        // Handle deepfake detection
+        if (detailData.deepfake_detected) {
+          explanation.deepfake = {
+            detected: true,
+            confidence: detailData.deepfake_confidence || 0.75,
+            details: detailData.deepfake_explanation || 'Our AI system detected signs of facial manipulation in this image.',
+            common_indicators: detailData.deepfake_indicators || [
+              'Inconsistent facial features',
+              'Unnatural skin texture',
+              'Irregular lighting on face',
+              'Blurry or distorted areas around facial features'
+            ]
+          };
+        }
+        
+        // Handle NSFW detection
+        if (detailData.nsfw_detected) {
+          explanation.nsfw = {
+            detected: true,
+            confidence: detailData.nsfw_confidence || 0.8,
+            details: detailData.nsfw_explanation || 'Our AI system detected inappropriate content that violates our community guidelines.',
+            content_type: detailData.content_type || 'Potentially inappropriate content'
+          };
+        }
+        
+        // Handle technical issues
+        if (detailData.technical_issue) {
+          explanation.technical_issue = {
+            details: detailData.technical_message || 'Our system encountered a technical issue while processing your image.'
+          };
+        }
+        
+        // If we have any explanation data, set it
+        if (Object.keys(explanation).length > 0) {
+          setDetailedExplanation(explanation);
+        }
+        
+        // Set visual areas if available
+        if (detailData.visual_areas) {
+          setVisualAreas(detailData.visual_areas);
+        }
+      } else {
+        // If detail is just a string, create a technical issue explanation
+        setError('Image upload failed');
+        setDetailedExplanation({
+          technical_issue: {
+            details: error.response.data.detail
+          }
+        });
+      }
+    } else if (error.response && error.response.status === 400) {
+      setError('Image rejected - See detailed explanation below');
+      // Create a generic explanation when specific details aren't available
+      setDetailedExplanation({
+        deepfake: {
+          detected: true,
+          confidence: 0.65,
+          details: 'Our AI system detected potential manipulation in this image that violates our community guidelines.',
+          common_indicators: ['The image contains patterns consistent with synthetic or manipulated content']
+        }
+      });
+    } else if (error.response && error.response.status === 500) {
+      setError('Server error');
+      setDetailedExplanation({
+        technical_issue: {
+          details: 'Our AI image detection system is currently unavailable. For safety reasons, we cannot accept uploads at this time. Please try again later.'
+        }
+      });
+    } else {
+      setError('Upload failed');
+      setDetailedExplanation({
+        technical_issue: {
+          details: 'We encountered an unexpected error while processing your image. Please try again later or contact support if the problem persists.'
+        }
+      });
+    }
+  };
+  
+  // Handle file selection from input
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
+    const selectedFiles = Array.from(e.target.files);
+    selectedFiles.forEach(processFile);
+  };
+  
+  // Handle drag events
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+  
+  // Handle drop event
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      droppedFiles.forEach(processFile);
+    }
+  };
+  
+  // Process the selected file
+  const processFile = (selectedFile) => {
     setError('');
     setScanningStage('');
+    setDetailedExplanation(null);
+    setVisualAreas(null);
+    setShowFilters(false);
     
     if (!selectedFile) {
-      setFile(null);
-      setPreview(null);
-      setFileSize(0);
-      setFileType('');
       return;
     }
     
     // Check file size
     if (selectedFile.size > MAX_FILE_SIZE) {
       setError(`File size exceeds the maximum limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
-      setFile(null);
-      setPreview(null);
       return;
     }
     
     // Check file type
     if (!ALLOWED_TYPES.includes(selectedFile.type)) {
       setError('Please select an image file (JPEG, PNG, or GIF)');
-      setFile(null);
-      setPreview(null);
       return;
     }
     
-    // Store file details
-    setFileSize(selectedFile.size);
-    setFileType(selectedFile.type);
+    // Create a unique ID for this file
+    const fileId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     
     // Create preview
     const reader = new FileReader();
     reader.onload = () => {
-      setPreview(reader.result);
+      // Add to files array
+      setFiles(prevFiles => [...prevFiles, selectedFile]);
+      
+      // Add to previews array
+      setPreviews(prevPreviews => [...prevPreviews, {
+        id: fileId,
+        file: selectedFile,
+        preview: reader.result,
+        size: selectedFile.size,
+        type: selectedFile.type,
+        filter: null
+      }]);
+      
+      // Add to filesInfo array
+      setFilesInfo(prevFilesInfo => [...prevFilesInfo, {
+        id: fileId,
+        size: selectedFile.size,
+        type: selectedFile.type
+      }]);
     };
     reader.readAsDataURL(selectedFile);
-    
-    setFile(selectedFile);
+  };
+  
+  // Apply image filter to a specific image
+  const applyFilter = (fileId, filterName) => {
+    setPreviews(prevPreviews => 
+      prevPreviews.map(item => 
+        item.id === fileId ? { ...item, filter: filterName } : item
+      )
+    );
   };
   
   const handleSubmit = async (e) => {
@@ -69,9 +213,12 @@ function Upload() {
     setError('');
     setSuccess(false);
     setScanningStage('starting');
+    setDetailedExplanation(null);
+    setVisualAreas(null);
+    setUploadProgress(0);
     
-    if (!file) {
-      setError('Please select an image to upload');
+    if (files.length === 0) {
+      setError('Please select at least one image to upload');
       setScanningStage('');
       return;
     }
@@ -80,77 +227,107 @@ function Upload() {
     
     try {
       const token = localStorage.getItem('token');
-      const formData = new FormData();
-      formData.append('file', file);
       
-      if (caption) {
-        formData.append('caption', caption);
-      }
+      // Create an array to store all upload promises
+      const uploadPromises = [];
       
       // Update scanning stage for UI feedback
       setScanningStage('uploading');
-      setTimeout(() => setScanningStage('analyzing'), 1000);
       
-      // Upload the image
-      await axios.post('http://localhost:8000/upload/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return 95;
+          }
+          return prev + 5;
+        });
+      }, 200);
+      
+      // Process each file
+      for (const fileItem of previews) {
+        const formData = new FormData();
+        formData.append('file', fileItem.file);
+        
+        // Add caption if available for this file
+        if (captions[fileItem.id]) {
+          formData.append('caption', captions[fileItem.id]);
         }
-      });
+        
+        // If we have applied filters, add that information
+        if (fileItem.filter) {
+          formData.append('filter', fileItem.filter);
+        }
+        
+        // Create upload promise with individual file tracking
+        const uploadPromise = axios.post('http://localhost:8000/upload/', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted > 95 ? 95 : percentCompleted);
+          }
+        })
+        .then(response => {
+          return { id: fileItem.id, success: true, response };
+        })
+        .catch(error => {
+          return { id: fileItem.id, success: false, error, file: fileItem };
+        });
+        
+        uploadPromises.push(uploadPromise);
+      }
       
-      setScanningStage('complete');
-      setSuccess(true);
+      // Wait for all uploads to complete and process results
+      const results = await Promise.all(uploadPromises);
       
-      // Reset form and explanations
-      setFile(null);
-      setCaption('');
-      setPreview(null);
-      setFileSize(0);
-      setFileType('');
-      setDetailedExplanation(null);
-      setVisualAreas(null);
+      // Clear the progress interval if it's still running
+      clearInterval(progressInterval);
+      setUploadProgress(100);
       
-      // Redirect to home after a short delay
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
+      // Process results to identify rejected images
+      const rejected = results.filter(result => !result.success).map(result => result.file);
+      setRejectedImages(rejected);
+      
+      if (rejected.length > 0) {
+        // Some images were rejected
+        setScanningStage('partial');
+        setError(`${rejected.length} image${rejected.length > 1 ? 's were' : ' was'} rejected - See details below`);
+        
+        // Process the first rejection for detailed explanation
+        const firstRejection = results.find(result => !result.success);
+        if (firstRejection && firstRejection.error) {
+          processErrorResponse(firstRejection.error);
+        }
+        
+        // Remove rejected images from previews but keep successful ones
+        const successfulImageIds = results.filter(result => result.success).map(result => result.id);
+        setPreviews(prev => prev.filter(item => successfulImageIds.includes(item.id)));
+      } else {
+        // All images were successful
+        setScanningStage('complete');
+        setSuccess(true);
+        
+        // Reset form and explanations
+        setFiles([]);
+        setCaptions({});
+        setPreviews([]);
+        setFilesInfo([]);
+        setDetailedExplanation(null);
+        setVisualAreas(null);
+        
+        // Only redirect to home if all uploads were successful
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      }
     } catch (error) {
       console.error('Upload error:', error);
       setScanningStage('failed');
-      
-      // Reset previous explanations
-      setDetailedExplanation(null);
-      setVisualAreas(null);
-      
-      if (error.response && error.response.data && error.response.data.detail) {
-        // Check if the detail is an object with explanation data
-        if (typeof error.response.data.detail === 'object') {
-          const detailData = error.response.data.detail;
-          
-          // Set the basic error message
-          setError(detailData.message || 'Image rejected by our AI safety system');
-          
-          // Set detailed explanation if available
-          if (detailData.explanation) {
-            setDetailedExplanation(detailData.explanation);
-          }
-          
-          // Set visual areas if available
-          if (detailData.visual_areas) {
-            setVisualAreas(detailData.visual_areas);
-          }
-        } else {
-          // If detail is just a string
-          setError(error.response.data.detail);
-        }
-      } else if (error.response && error.response.status === 400) {
-        setError('Image rejected by our AI safety system. Please make sure your image meets our community guidelines.');
-      } else if (error.response && error.response.status === 500) {
-        setError('Server error. Our AI image detection system may be unavailable. Please try again later.');
-      } else {
-        setError('Failed to upload image. Please try again later.');
-      }
+      processErrorResponse(error);
     } finally {
       setLoading(false);
     }
@@ -171,7 +348,7 @@ function Upload() {
       case 'starting':
         return 'Preparing upload...';
       case 'uploading':
-        return 'Uploading image...';
+        return `Uploading image... ${uploadProgress}%`;
       case 'analyzing':
         return 'Analyzing image for deepfakes and NSFW content...';
       case 'complete':
@@ -182,6 +359,13 @@ function Upload() {
         return '';
     }
   };
+  
+  // Effect to update scanning stage based on upload progress
+  useEffect(() => {
+    if (uploadProgress >= 95 && scanningStage === 'uploading') {
+      setScanningStage('analyzing');
+    }
+  }, [uploadProgress, scanningStage]);
   
   return (
     <div className="max-w-2xl mx-auto">
@@ -222,7 +406,7 @@ function Upload() {
                   {(detailedExplanation.deepfake.confidence * 100).toFixed(1)}% confidence
                 </span>
               </div>
-              <p className="text-sm text-gray-700 mb-2">{detailedExplanation.deepfake.details}</p>
+              <p className="text-sm text-gray-700 mb-2">{detailedExplanation.deepfake.details || 'Our AI system detected signs of facial manipulation in this image.'}</p>
               
               {detailedExplanation.deepfake.common_indicators && detailedExplanation.deepfake.common_indicators.length > 0 && (
                 <div className="mt-2">
@@ -252,7 +436,7 @@ function Upload() {
                   {(detailedExplanation.nsfw.confidence * 100).toFixed(1)}% confidence
                 </span>
               </div>
-              <p className="text-sm text-gray-700 mb-2">{detailedExplanation.nsfw.details}</p>
+              <p className="text-sm text-gray-700 mb-2">{detailedExplanation.nsfw.details || 'Our AI system detected inappropriate content in this image that violates our community guidelines.'}</p>
               
               {detailedExplanation.nsfw.content_type && (
                 <p className="text-sm text-gray-600">
@@ -262,12 +446,34 @@ function Upload() {
             </div>
           )}
           
-          {/* Visual Areas Placeholder - In a real implementation, this would show a heatmap or bounding boxes */}
-          {visualAreas && visualAreas.length > 0 && (
+          {/* Technical Issues Explanation */}
+          {detailedExplanation.technical_issue && (
+            <div className="mb-4">
+              <h4 className="font-bold text-yellow-700 mb-1">Technical Issue</h4>
+              <p className="text-sm text-gray-700">{detailedExplanation.technical_issue.details || 'Our system encountered a technical issue while processing your image.'}</p>
+            </div>
+          )}
+          
+          {/* Visual Areas - Shows areas of concern in the image */}
+          {visualAreas && visualAreas.length > 0 && previews.length > 0 && (
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-700">Areas of concern detected in image</p>
-              <div className="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-500">
-                Visual highlighting is available in the administrator view
+              <div className="relative mt-2 border border-gray-300 rounded-md overflow-hidden">
+                {previews[0] && (
+                  <img src={previews[0].preview} alt="Preview with issues" className="w-full max-h-64 object-contain" />
+                )}
+                {visualAreas.map((area, index) => (
+                  <div 
+                    key={index}
+                    className="absolute border-2 border-red-500 bg-red-200 bg-opacity-30"
+                    style={{
+                      left: `${area.x * 100}%`,
+                      top: `${area.y * 100}%`,
+                      width: `${area.width * 100}%`,
+                      height: `${area.height * 100}%`
+                    }}
+                  ></div>
+                ))}
               </div>
             </div>
           )}
@@ -276,7 +482,8 @@ function Upload() {
             <p className="font-medium">What to do next:</p>
             <ul className="list-disc ml-5 mt-1">
               <li>Try uploading a different image that meets our community guidelines</li>
-              <li>If you believe this is a mistake, you can contact support</li>
+              <li>If you believe this is a mistake, please contact our support team</li>
+              <li>Review our <a href="#" className="text-blue-600 hover:underline">content policy</a> for more information</li>
             </ul>
           </div>
         </div>
@@ -308,64 +515,190 @@ function Upload() {
               id="image"
               type="file"
               accept="image/*"
+              multiple
               onChange={handleFileChange}
               disabled={loading}
-              ref={(fileInput) => fileInput && (window.fileInput = fileInput)}
+              ref={fileInputRef}
             />
-            {!preview ? (
-              <div onClick={() => window.fileInput.click()} className="cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="mt-1 text-sm text-gray-600">Click to browse or drag and drop</p>
-                <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
-              </div>
-            ) : (
-              <div className="relative">
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="max-h-64 mx-auto rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFile(null);
-                    setPreview(null);
-                    setFileSize(0);
-                    setFileType('');
-                  }}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            <div 
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              className={`transition-all duration-300 ${dragActive ? 'border-pink-500 bg-pink-50' : ''}`}
+            >
+              {previews.length === 0 ? (
+                <div onClick={() => fileInputRef.current.click()} className="cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                </button>
-              </div>
-            )}
+                  <p className="mt-1 text-sm text-gray-600">Click to browse or drag and drop</p>
+                  <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                  <p className="mt-1 text-xs font-semibold text-pink-500">Multiple files supported!</p>
+                  {dragActive && (
+                    <div className="absolute inset-0 bg-pink-100 bg-opacity-50 flex items-center justify-center rounded-lg">
+                      <p className="text-lg font-medium text-pink-600">Drop images here</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-sm font-medium text-gray-700">{previews.length} image{previews.length !== 1 ? 's' : ''} selected</h3>
+                    <button 
+                      onClick={() => fileInputRef.current.click()} 
+                      className="text-xs bg-pink-500 text-white px-2 py-1 rounded hover:bg-pink-600"
+                    >
+                      Add More
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-2">
+                    {previews.map((item) => (
+                      <div key={item.id} className="relative group">
+                        <img
+                          src={item.preview}
+                          alt={`Preview ${item.id}`}
+                          className="w-full h-32 object-cover rounded border border-gray-200"
+                          style={{
+                            filter: item.filter === 'grayscale' ? 'grayscale(100%)' : 
+                                  item.filter === 'sepia' ? 'sepia(100%)' : 
+                                  item.filter === 'blur' ? 'blur(2px)' : 
+                                  item.filter === 'brightness' ? 'brightness(150%)' : 
+                                  item.filter === 'contrast' ? 'contrast(150%)' : ''
+                          }}
+                        />
+                        <div className="absolute top-1 right-1 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Filter button */}
+                          <button
+                            type="button"
+                            onClick={() => setShowFilters(item.id)}
+                            className="bg-blue-500 text-white rounded-full p-1 hover:bg-blue-600 focus:outline-none"
+                            title="Apply filters"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviews(prevPreviews => prevPreviews.filter(p => p.id !== item.id));
+                              setFiles(prevFiles => prevFiles.filter((_, index) => 
+                                prevFiles[index] !== item.file
+                              ));
+                              setCaptions(prevCaptions => {
+                                const newCaptions = {...prevCaptions};
+                                delete newCaptions[item.id];
+                                return newCaptions;
+                              });
+                            }}
+                            className="bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
+                            title="Remove image"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        {/* Caption input for each image */}
+                        <input 
+                          type="text" 
+                          placeholder="Add caption..."
+                          className="mt-1 w-full text-xs p-1 border border-gray-200 rounded"
+                          value={captions[item.id] || ''}
+                          onChange={(e) => setCaptions(prev => ({...prev, [item.id]: e.target.value}))}
+                        />
+                        
+                        {/* Filter options */}
+                        {showFilters === item.id && (
+                          <div className="absolute left-1 top-1 bg-white p-2 rounded-lg shadow-md z-10">
+                            <div className="flex flex-col space-y-1">
+                              <button 
+                                onClick={() => applyFilter(item.id, null)} 
+                                className={`px-2 py-1 text-xs rounded ${!item.filter ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              >
+                                Normal
+                              </button>
+                              <button 
+                                onClick={() => applyFilter(item.id, 'grayscale')} 
+                                className={`px-2 py-1 text-xs rounded ${item.filter === 'grayscale' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              >
+                                Grayscale
+                              </button>
+                              <button 
+                                onClick={() => applyFilter(item.id, 'sepia')} 
+                                className={`px-2 py-1 text-xs rounded ${item.filter === 'sepia' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              >
+                                Sepia
+                              </button>
+                              <button 
+                                onClick={() => applyFilter(item.id, 'brightness')} 
+                                className={`px-2 py-1 text-xs rounded ${item.filter === 'brightness' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              >
+                                Brighten
+                              </button>
+                              <button 
+                                onClick={() => applyFilter(item.id, 'contrast')} 
+                                className={`px-2 py-1 text-xs rounded ${item.filter === 'contrast' ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                              >
+                                Contrast
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           
-          {fileSize > 0 && (
+          {filesInfo.length > 0 && (
             <div className="mt-2 text-sm text-gray-600">
-              File details: {formatFileSize(fileSize)} • {fileType.split('/')[1].toUpperCase()}
+              Total files: {files.length} • Total size: {formatFileSize(files.reduce((total, file) => total + file.size, 0))}
             </div>
           )}
         </div>
         
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="caption">
-            Caption (optional)
-          </label>
-          <textarea
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-            id="caption"
-            placeholder="Add a caption to your image..."
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            disabled={loading}
-            rows="3"
-          ></textarea>
-        </div>
+        {/* Display rejected images if any */}
+        {rejectedImages.length > 0 && (
+          <div className="mb-6 mt-4">
+            <h3 className="text-lg font-semibold text-red-600 mb-2">Rejected Images</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {rejectedImages.map((item, index) => (
+                <div key={index} className="relative border border-red-300 rounded-lg overflow-hidden bg-red-50">
+                  <div className="relative pt-[100%] overflow-hidden">
+                    <img 
+                      src={item.preview} 
+                      alt={`Rejected image ${index + 1}`} 
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{
+                        filter: item.filter === 'grayscale' ? 'grayscale(100%)' :
+                                item.filter === 'sepia' ? 'sepia(100%)' :
+                                item.filter === 'brightness' ? 'brightness(130%)' :
+                                item.filter === 'contrast' ? 'contrast(150%)' : 'none'
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-red-900 bg-opacity-30 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm px-2 py-1 bg-red-600 rounded-full">Rejected</span>
+                    </div>
+                  </div>
+                  <div className="p-2 text-xs text-gray-700">
+                    <p className="truncate">{item.file.name}</p>
+                    <p>{formatFileSize(item.size)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Caption inputs are now per image */}
         
         {scanningStage && (
           <div className="mb-6">
@@ -376,9 +709,21 @@ function Upload() {
                     {getScanningStageText()}
                   </span>
                 </div>
+                {scanningStage === 'uploading' && (
+                  <div className="text-xs text-gray-500">
+                    {uploadProgress}%
+                  </div>
+                )}
               </div>
               <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-pink-200">
-                <div className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 ${scanningStage === 'complete' ? 'w-full' : scanningStage === 'failed' ? 'w-full bg-red-500' : 'w-3/4 animate-pulse'}`}></div>
+                {scanningStage === 'uploading' ? (
+                  <div 
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 transition-all duration-300" 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                ) : (
+                  <div className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500 ${scanningStage === 'complete' ? 'w-full' : scanningStage === 'failed' ? 'w-full bg-red-500' : 'w-3/4 animate-pulse'}`}></div>
+                )}
               </div>
             </div>
           </div>
@@ -390,50 +735,12 @@ function Upload() {
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             type="submit"
-            disabled={loading || !file}
+            disabled={loading || files.length === 0}
           >
-            {loading ? 'Processing...' : 'Upload Image'}
+            {loading ? 'Processing...' : `Upload ${files.length} Image${files.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       </form>
-      
-      <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded-lg shadow">
-        <h3 className="font-bold mb-2">AI-Powered Image Moderation</h3>
-        <p className="mb-3">SafeGram automatically analyzes all uploaded images for:</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 mt-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <p className="ml-2 text-sm">
-              <span className="font-semibold">Deepfake Detection:</span> Identifies manipulated or synthetic faces
-            </p>
-          </div>
-          <div className="flex items-start">
-            <div className="flex-shrink-0 mt-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <p className="ml-2 text-sm">
-              <span className="font-semibold">NSFW Screening:</span> Filters explicit or inappropriate content
-            </p>
-          </div>
-        </div>
-        <p className="text-sm mb-2">Images that violate our community standards will be automatically rejected to maintain a safe environment for all users.</p>
-        <p className="text-sm font-semibold">Note: This system relies on advanced AI models that must be available for uploads to work. If the AI detection system is unavailable, uploads will be temporarily rejected for safety.</p>
-      </div>
-      
-      <div className="text-sm text-gray-500 mt-4">
-        <p>Having trouble uploading? Make sure your image meets these requirements:</p>
-        <ul className="list-disc ml-5 mt-1">
-          <li>File must be a PNG, JPG, or GIF</li>
-          <li>Maximum file size is 5MB</li>
-          <li>Image must not contain manipulated faces or explicit content</li>
-        </ul>
-      </div>
     </div>
   );
 }

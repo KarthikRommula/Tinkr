@@ -41,6 +41,7 @@ __pycache__/
 *.onnx
 *.tflite
 *.pt
+/test
 
 # Training data and checkpoints
 /training_data/
