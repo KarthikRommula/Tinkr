@@ -14,6 +14,7 @@ import logging
 import time
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, HTTPException, status
+from PIL import Image
 
 # Load environment variables from .env file
 load_dotenv()
@@ -36,8 +37,14 @@ app = FastAPI(title="SafeGram API")
 # Set up upload directory
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 TEMP_DIR = os.getenv("TEMP_DIR", "temp_uploads")
+TEST_DIR = os.getenv("TEST_DIR", "test")
+REAL_DIR = os.path.join(TEST_DIR, "real")
+FAKE_DIR = os.path.join(TEST_DIR, "fake")
+
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
+os.makedirs(REAL_DIR, exist_ok=True)
+os.makedirs(FAKE_DIR, exist_ok=True)
 
 # Mount the uploads directory as a static files directory
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
@@ -120,6 +127,11 @@ class DetectionResult(BaseModel):
     reason: Optional[str] = None
     explanation: Optional[dict] = None
     visual_areas: Optional[list] = None
+
+class ClassificationResult(BaseModel):
+    is_real: bool
+    confidence: float
+    file_path: str
 
 # Helper functions
 def verify_password(plain_password, hashed_password):
@@ -485,6 +497,76 @@ async def upload_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing image: {str(e)}"
         )
+
+@app.post("/classify-image/", response_model=ClassificationResult)
+async def classify_image(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Upload an image and classify it as real or fake.
+    The image will be saved to the appropriate folder based on classification.
+    """
+    temp_file_path = ""
+    
+    try:
+        # Create a temporary file
+        os.makedirs(TEMP_DIR, exist_ok=True)
+        temp_file_path = f"{TEMP_DIR}/{uuid4().hex}_{file.filename}"
+        
+        # Save uploaded file to temporary location
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Verify it's a valid image
+        try:
+            img = Image.open(temp_file_path)
+            img.verify()  # Verify it's an image
+        except Exception as e:
+            background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+            logger.error(f"Invalid image file: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid image file. Please upload a valid image."
+            )
+        
+        # Use the deepfake detector to classify the image
+        is_deepfake, confidence = deepfake_detector.detect(temp_file_path)
+        
+        # Determine target directory based on classification
+        target_dir = FAKE_DIR if is_deepfake else REAL_DIR
+        
+        # Save the image to the appropriate directory
+        final_filename = f"{uuid4().hex}_{file.filename}"
+        final_path = os.path.join(target_dir, final_filename)
+        shutil.copy(temp_file_path, final_path)
+        
+        # Schedule cleanup of temp file
+        background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+        
+        logger.info(f"Image classified as {'fake' if is_deepfake else 'real'} with confidence {confidence:.4f}")
+        
+        return ClassificationResult(
+            is_real=not is_deepfake,
+            confidence=confidence,
+            file_path=final_path
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        # Clean up the temporary file if it exists
+        if os.path.exists(temp_file_path):
+            background_tasks.add_task(cleanup_temp_files, [temp_file_path])
+        
+        logger.error(f"Error processing image: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing image: {str(e)}"
+        )
+
 @app.get("/feed/", response_model=List[Post])
 async def get_feed(current_user: User = Depends(get_current_active_user)):
     # In a real app, you'd filter the feed based on followed users

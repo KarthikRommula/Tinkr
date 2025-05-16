@@ -202,14 +202,32 @@ function Navbar() {
                 className={`block px-3 py-2 rounded-md ${isActive('/') ? 'bg-pink-50 text-pink-500' : 'text-gray-700 hover:bg-gray-50'}`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Home
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7m-7-7v14" />
+                </svg>
+                <span className="font-medium text-sm">Home</span>
               </Link>
+
+              {/* Upload */}
               <Link 
                 to="/upload" 
-                className={`block px-3 py-2 rounded-md ${isActive('/upload') ? 'bg-pink-50 text-pink-500' : 'text-gray-700 hover:bg-gray-50'}`}
-                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center space-x-1 ${isActive('/upload') ? 'text-pink-500' : 'text-gray-600 hover:text-pink-500'} transition-colors`}
               >
-                Upload
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium text-sm">Upload</span>
+              </Link>
+
+              {/* Classify */}
+              <Link 
+                to="/classify" 
+                className={`flex items-center space-x-1 ${isActive('/classify') ? 'text-pink-500' : 'text-gray-600 hover:text-pink-500'} transition-colors`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium text-sm">Classify</span>
               </Link>
               <Link 
                 to="/profile" 
